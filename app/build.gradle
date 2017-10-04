@@ -26,6 +26,9 @@ android {
             includeAndroidResources = true
         }
     }
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -37,6 +40,7 @@ dependencies {
     testCompile 'org.hamcrest:hamcrest-library:1.1'
     testCompile 'org.mockito:mockito-core:1.10.19'
     testCompile 'org.robolectric:robolectric:3.0'
+    testCompile "com.nhaarman:mockito-kotlin:1.5.0"
 
     androidTestImplementation('com.android.support.test.espresso:espresso-core:3.0.1', {
         exclude group: 'com.android.support', module: 'support-annotations'

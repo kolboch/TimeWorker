@@ -1,14 +1,14 @@
 package com.example.kb.worktimer.model
 
 import android.os.SystemClock
-import android.util.Log
+import android.support.annotation.VisibleForTesting
 
 /**
  * Created by Karol on 2017-10-04.
  */
 class ChronometerMonitor(
-        private var isWorking: Boolean = false,
-        private var currentWorkTime: Long = 0
+        @VisibleForTesting var isWorking: Boolean = false,
+        @VisibleForTesting var currentWorkTime: Long = 0
 ) {
 
     fun startStop(chronoTimeBase: Long, startStopCallback: (Boolean, Long) -> Unit) {
@@ -26,17 +26,19 @@ class ChronometerMonitor(
         return getBase()
     }
 
-    private fun getBase(): Long {
+    @VisibleForTesting
+    fun getBase(): Long {
         return SystemClock.elapsedRealtime() - currentWorkTime
     }
 
-    private fun start() {
+    @VisibleForTesting
+    fun start() {
         isWorking = true
     }
 
-    private fun stop(timeBase: Long) {
+    @VisibleForTesting
+    fun stop(timeBase: Long) {
         currentWorkTime = SystemClock.elapsedRealtime() - timeBase
-        Log.v("Chrono monitor", "$currentWorkTime")
         isWorking = false
     }
 }
