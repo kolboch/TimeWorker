@@ -16,6 +16,7 @@ class MainActivity : AppCompatActivity(), MainView {
         presenter = MainPresenter(this, applicationContext)
         presenter.initFakeData()
         onTimerButtonSetup()
+        onChronometerSetup()
     }
 
     private fun onTimerButtonSetup() {
@@ -24,10 +25,15 @@ class MainActivity : AppCompatActivity(), MainView {
         }
     }
 
+    private fun onChronometerSetup() {
+        Log.v(LOG_TAG, "OnChronometerSetup invoked")
+        presenter.setupChronometer()
+    }
+
     override fun onChronometerStopped() {
         chronometer.stop()
         timerButton.setText(R.string.start)
-        Log.v(LOG_TAG, "chronometer stop call")
+        Log.v(LOG_TAG, "chronometer stopAndUpdateWorkingTime call")
     }
 
     override fun onChronometerStarted() {
@@ -39,6 +45,5 @@ class MainActivity : AppCompatActivity(), MainView {
     override fun onChronometerTimeUpdate(time: Long) {
         chronometer.base = time
     }
-
 
 }

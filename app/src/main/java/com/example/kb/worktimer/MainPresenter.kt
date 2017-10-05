@@ -1,6 +1,7 @@
 package com.example.kb.worktimer
 
 import android.content.Context
+import android.util.Log
 import com.example.kb.worktimer.database.MySqlHelper
 import com.example.kb.worktimer.model.ChronometerMonitor
 
@@ -21,17 +22,25 @@ class MainPresenter(
     }
 
     fun timerButtonClicked(timeBase: Long) {
-        monitor.startStop(timeBase,
-                { isWorking: Boolean, timeBase: Long -> changeChronometerState(isWorking, timeBase) }
-        )
+        monitor.startStop(timeBase, { wasWorking: Boolean, timeBase: Long, workingTime: Long ->
+            changeChronometerState(wasWorking, timeBase, workingTime)
+        })
     }
 
-    private fun changeChronometerState(isWorking: Boolean, timeBase: Long) {
-        if (isWorking) {
+    private fun changeChronometerState(wasWorking: Boolean, timeBase: Long, workingTime: Long) {
+        if (wasWorking) {
             view.onChronometerStopped()
+            databaseHelper.updateTodayWorkingTime(workingTime)
         } else {
             view.onChronometerTimeUpdate(timeBase)
             view.onChronometerStarted()
         }
+    }
+
+    fun setupChronometer() {
+        val savedWorkingTime = databaseHelper.getTodayWorkingTime()
+        Log.v(LOG_TAG, "Saved working time: $savedWorkingTime")
+        val chronoBase = monitor.getChronoTimeBaseAndSetup(savedWorkingTime)
+        view.onChronometerTimeUpdate(chronoBase)
     }
 }

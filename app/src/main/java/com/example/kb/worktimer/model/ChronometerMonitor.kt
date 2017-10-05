@@ -11,14 +11,14 @@ class ChronometerMonitor(
         @VisibleForTesting var currentWorkTime: Long = 0
 ) {
 
-    fun startStop(chronoTimeBase: Long, startStopCallback: (Boolean, Long) -> Unit) {
-        startStopCallback(isWorking, getBase())
+    fun startStop(chronoTimeBase: Long, startStopCallback: (Boolean, Long, Long) -> Unit) {
+        val lastChronometerState = isWorking
         if (isWorking) {
-            stop(chronoTimeBase)
+            stopAndUpdateWorkingTime(chronoTimeBase)
         } else {
             start()
         }
-
+        startStopCallback(lastChronometerState, getBase(), currentWorkTime)
     }
 
     fun getChronoTimeBaseAndSetup(workTime: Long): Long {
@@ -27,7 +27,7 @@ class ChronometerMonitor(
     }
 
     @VisibleForTesting
-    fun getBase(): Long {
+    private fun getBase(): Long {
         return SystemClock.elapsedRealtime() - currentWorkTime
     }
 
@@ -37,7 +37,7 @@ class ChronometerMonitor(
     }
 
     @VisibleForTesting
-    fun stop(timeBase: Long) {
+    fun stopAndUpdateWorkingTime(timeBase: Long) {
         currentWorkTime = SystemClock.elapsedRealtime() - timeBase
         isWorking = false
     }

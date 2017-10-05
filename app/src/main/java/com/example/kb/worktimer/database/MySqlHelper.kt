@@ -4,7 +4,9 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import com.example.kb.worktimer.model.WorkTime
+import com.example.kb.worktimer.model.getTodayDateInMillis
 import org.jetbrains.anko.db.*
+import java.util.*
 
 /**
  * Created by Karlo on 2017-09-30.
@@ -44,10 +46,52 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
 
     fun insertFakeData() {
         FakeDbData.insertEntries(context)
+    }
+
+    private fun logAllEntries() {
+        //TODO delete before production
         val entries = context.database.use {
             select(TIMES_TABLE_NAME).exec { parseList(classParser<WorkTime>()) }
         }
         entries.forEach { Log.v(LOG_TAG, it.toString()) }
+    }
+
+    fun updateTodayWorkingTime(workingTime: Long) {
+        val todayMillis = Calendar.getInstance().getTodayDateInMillis()
+
+        context.database.use {
+            replace(TIMES_TABLE_NAME,
+                    TIMES_TABLE_DATE to todayMillis,
+                    TIMES_TABLE_TIME to workingTime)
+        }
+    }
+
+    fun getTodayWorkingTime(): Long {
+        val todayMillis = Calendar.getInstance().getTodayDateInMillis()
+        var result = getTodayWorkTime(todayMillis)
+
+        if (result == null) {
+            setupTodayWorkingTime(todayMillis)
+            result = WorkTime(todayMillis, 0)
+        }
+
+        return result.timeWorked
+    }
+
+    private fun getTodayWorkTime(todayMillis: Long): WorkTime? {
+        return context.database.use {
+            select(TIMES_TABLE_NAME)
+                    .whereSimple("$TIMES_TABLE_DATE = ?", "$todayMillis")
+                    .exec { parseOpt(classParser()) }
+        }
+    }
+
+    private fun setupTodayWorkingTime(todayMillis: Long) {
+        context.database.use {
+            insert(TIMES_TABLE_NAME,
+                    TIMES_TABLE_DATE to todayMillis,
+                    TIMES_TABLE_TIME to 0)
+        }
     }
 
 }

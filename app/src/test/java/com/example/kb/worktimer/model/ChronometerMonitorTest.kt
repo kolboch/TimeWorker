@@ -14,7 +14,7 @@ import org.mockito.Spy
  */
 class ChronometerMonitorTest {
 
-    private val callback = { _: Boolean, _: Long -> Unit }
+    private val callback = { _: Boolean, _: Long, _: Long -> Unit }
 
     @Spy private
     lateinit var monitor: ChronometerMonitor
@@ -36,8 +36,8 @@ class ChronometerMonitorTest {
         monitor.isWorking = true
 
         monitor.startStop(1, callback)
-        
-        verify(monitor).stop(1)
+
+        verify(monitor).stopAndUpdateWorkingTime(1)
         verify(monitor, never()).start()
     }
 
@@ -48,7 +48,7 @@ class ChronometerMonitorTest {
         monitor.startStop(1, callback)
 
         verify(monitor).start()
-        verify(monitor, never()).stop(any())
+        verify(monitor, never()).stopAndUpdateWorkingTime(any())
     }
 
     @Test
@@ -60,7 +60,7 @@ class ChronometerMonitorTest {
 
     @Test
     fun whenStoppedThenWorkingFalse() {
-        monitor.stop(any())
+        monitor.stopAndUpdateWorkingTime(any())
 
         assertEquals(false, monitor.isWorking)
     }
@@ -70,5 +70,11 @@ class ChronometerMonitorTest {
         monitor.getChronoTimeBaseAndSetup(1790)
 
         assertEquals(1790, monitor.currentWorkTime)
+    }
+
+    @Test
+    fun setSavedWorkingTimeTest() {
+        monitor.getChronoTimeBaseAndSetup(189)
+        assertEquals(189, monitor.currentWorkTime)
     }
 }
