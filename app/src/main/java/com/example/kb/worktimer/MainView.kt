@@ -9,4 +9,5 @@ interface MainView {
 
     fun onChronometerStopped()
     fun onChronometerStarted()
+    fun onChronometerDisplayFormatChange(format: String)
 }

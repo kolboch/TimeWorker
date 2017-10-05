@@ -8,6 +8,8 @@ import com.example.kb.worktimer.model.ChronometerMonitor
 /**
  * Created by Karlo on 2017-10-01.
  */
+const val CHRONOMETER_FORMAT = "%s"
+
 class MainPresenter(
         private val view: MainView,
         context: Context
@@ -42,5 +44,6 @@ class MainPresenter(
         Log.v(LOG_TAG, "Saved working time: $savedWorkingTime")
         val chronoBase = monitor.getChronoTimeBaseAndSetup(savedWorkingTime)
         view.onChronometerTimeUpdate(chronoBase)
+        view.onChronometerDisplayFormatChange(CHRONOMETER_FORMAT)
     }
 }
