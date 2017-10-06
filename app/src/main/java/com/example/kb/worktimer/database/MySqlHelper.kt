@@ -48,14 +48,6 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
         FakeDbData.insertEntries(context)
     }
 
-    private fun logAllEntries() {
-        //TODO delete before production
-        val entries = context.database.use {
-            select(TIMES_TABLE_NAME).exec { parseList(classParser<WorkTime>()) }
-        }
-        entries.forEach { Log.v(LOG_TAG, it.toString()) }
-    }
-
     fun updateTodayWorkingTime(workingTime: Long) {
         val todayMillis = Calendar.getInstance().getTodayDateInMillis()
 
@@ -76,6 +68,14 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
         }
 
         return result.timeWorked
+    }
+
+    private fun logAllEntries() {
+        //TODO delete before production
+        val entries = context.database.use {
+            select(TIMES_TABLE_NAME).exec { parseList(classParser<WorkTime>()) }
+        }
+        entries.forEach { Log.v(LOG_TAG, it.toString()) }
     }
 
     private fun getTodayWorkTime(todayMillis: Long): WorkTime? {

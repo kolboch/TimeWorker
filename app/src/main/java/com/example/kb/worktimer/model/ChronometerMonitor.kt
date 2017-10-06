@@ -6,6 +6,8 @@ import android.support.annotation.VisibleForTesting
 /**
  * Created by Karol on 2017-10-04.
  */
+const val CHRONOMETER_FORMAT = "%s"
+
 class ChronometerMonitor(
         @VisibleForTesting var isWorking: Boolean = false,
         @VisibleForTesting var currentWorkTime: Long = 0
