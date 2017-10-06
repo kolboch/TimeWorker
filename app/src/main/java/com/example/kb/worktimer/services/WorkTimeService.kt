@@ -1,5 +1,6 @@
 package com.example.kb.worktimer.services
 
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.Binder
@@ -13,7 +14,10 @@ import com.example.kb.worktimer.model.ChronometerMonitor
  * Created by Karlo on 2017-10-06.
  */
 const val ACTION_START = "com.example.kb.worktimer.action_start"
+const val PENDING_INTENT_PLAY = 111
 const val ACTION_STOP = "com.example.kb.worktimer.action_stop"
+const val PENDING_INTENT_STOP = 788
+const val NOTIFICATION_ID = 14
 
 class WorkTimeService : Service() {
 
@@ -22,6 +26,22 @@ class WorkTimeService : Service() {
     private val binder = WorkTimeServiceBinder()
     private val monitor = ChronometerMonitor()
     private lateinit var databaseHelper: MySqlHelper
+
+    private val startIntent by lazy {
+        PendingIntent.getService(
+                applicationContext,
+                PENDING_INTENT_PLAY,
+                Intent(ACTION_START),
+                0)
+    }
+
+    private val stopIntent by lazy {
+        PendingIntent.getService(
+                applicationContext,
+                PENDING_INTENT_STOP,
+                Intent(ACTION_STOP),
+                0)
+    }
 
     inner class WorkTimeServiceBinder : Binder() {
         fun getService(): WorkTimeService {
@@ -44,10 +64,12 @@ class WorkTimeService : Service() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
+        stopSelf()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        stopForeground(true)
     }
 
     fun initFakeData() {
@@ -56,6 +78,31 @@ class WorkTimeService : Service() {
 
     fun setChronometerUpdater(updater: ChronometerUpdater) {
         this.updater = updater
+    }
+
+    fun setupChronometer() {
+        val savedWorkingTime = databaseHelper.getTodayWorkingTime()
+        Log.v(LOG_TAG, "Saved working time: $savedWorkingTime")
+        val chronometerBase = monitor.getChronoTimeBaseAndSetup(savedWorkingTime)
+        updater.updateChronometerTime(chronometerBase)
+    }
+
+    fun setUpForeground() {
+        startForeground(
+                NOTIFICATION_ID,
+                MyNotification.getWorkTimerNotification(
+                        applicationContext,
+                        monitor.getChronometerBase(),
+                        startIntent,
+                        stopIntent)
+        )
+        Log.v(LOG_TAG, "Starting foreground")
+    }
+
+    fun timerButtonClicked(timeBase: Long) {
+        monitor.startStop(timeBase, { wasWorking: Boolean, timeBase: Long, workingTime: Long ->
+            changeChronometerState(wasWorking, timeBase, workingTime)
+        })
     }
 
     private fun changeChronometerState(wasWorking: Boolean, timeBase: Long, workingTime: Long) {
@@ -67,16 +114,4 @@ class WorkTimeService : Service() {
         }
     }
 
-    fun setupChronometer() {
-        val savedWorkingTime = databaseHelper.getTodayWorkingTime()
-        Log.v(LOG_TAG, "Saved working time: $savedWorkingTime")
-        val chronometerBase = monitor.getChronoTimeBaseAndSetup(savedWorkingTime)
-        updater.updateChronometerTime(chronometerBase)
-    }
-
-    fun timerButtonClicked(timeBase: Long) {
-        monitor.startStop(timeBase, { wasWorking: Boolean, timeBase: Long, workingTime: Long ->
-            changeChronometerState(wasWorking, timeBase, workingTime)
-        })
-    }
 }

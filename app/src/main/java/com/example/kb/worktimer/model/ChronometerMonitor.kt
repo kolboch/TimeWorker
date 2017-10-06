@@ -20,16 +20,15 @@ class ChronometerMonitor(
         } else {
             start()
         }
-        startStopCallback(lastChronometerState, getBase(), currentWorkTime)
+        startStopCallback(lastChronometerState, getChronometerBase(), currentWorkTime)
     }
 
     fun getChronoTimeBaseAndSetup(workTime: Long): Long {
         currentWorkTime = workTime
-        return getBase()
+        return getChronometerBase()
     }
 
-    @VisibleForTesting
-    private fun getBase(): Long {
+    fun getChronometerBase(): Long {
         return SystemClock.elapsedRealtime() - currentWorkTime
     }
 

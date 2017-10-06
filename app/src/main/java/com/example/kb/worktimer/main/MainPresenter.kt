@@ -42,4 +42,8 @@ class MainPresenter(private val view: MainView) : ChronometerUpdater {
     override fun updateChronometerTime(chronoBase: Long) {
         view.onChronometerTimeUpdate(chronoBase)
     }
+
+    fun startWorkServiceForeground() {
+        workService.setUpForeground()
+    }
 }

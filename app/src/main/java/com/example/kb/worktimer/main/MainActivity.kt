@@ -35,8 +35,8 @@ class MainActivity : AppCompatActivity(), MainView, ServiceConnection {
         onServiceSetup()
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
         if (serviceBound) {
             unbindService(this)
         }
@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity(), MainView, ServiceConnection {
     override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
         presenter.attach((binder as WorkTimeService.WorkTimeServiceBinder).getService())
         presenter.onChronometerSetup()
+        presenter.startWorkServiceForeground()
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {
