@@ -3,4 +3,6 @@
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="current_working_time">Current working time</string>
+
+    <string name="chronometer_format">%s</string>
 </resources>

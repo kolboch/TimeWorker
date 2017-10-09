@@ -12,7 +12,6 @@ import android.util.Log
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import com.example.kb.worktimer.R
-import com.example.kb.worktimer.model.CHRONOMETER_FORMAT
 import com.example.kb.worktimer.services.WorkTimeService
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -27,7 +26,6 @@ class MainActivity : AppCompatActivity(), MainView, ServiceConnection {
         setContentView(R.layout.activity_main)
         presenter = MainPresenter(this)
         onTimerButtonSetup()
-        onChronometerSetup()
     }
 
     override fun onStart() {
@@ -79,11 +77,6 @@ class MainActivity : AppCompatActivity(), MainView, ServiceConnection {
         timerButton.setOnClickListener {
             presenter.onTimerButtonClicked(chronometer.base)
         }
-    }
-
-    private fun onChronometerSetup() {
-        Log.v(LOG_TAG, "OnChronometerSetup invoked")
-        chronometer.format = CHRONOMETER_FORMAT
     }
 
     private fun animateButtonRight(view: View) {

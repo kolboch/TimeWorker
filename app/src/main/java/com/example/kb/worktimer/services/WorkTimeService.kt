@@ -8,7 +8,6 @@ import android.os.IBinder
 import android.util.Log
 import com.example.kb.worktimer.database.MySqlHelper
 import com.example.kb.worktimer.main.ChronometerUpdater
-import com.example.kb.worktimer.model.ChronometerMonitor
 
 /**
  * Created by Karlo on 2017-10-06.
@@ -59,6 +58,7 @@ class WorkTimeService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.v(LOG_TAG, "onStartCommand called")
+        handleIntentAction(intent?.action)
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -103,6 +103,12 @@ class WorkTimeService : Service() {
         monitor.startStop(timeBase, { wasWorking: Boolean, timeBase: Long, workingTime: Long ->
             changeChronometerState(wasWorking, timeBase, workingTime)
         })
+    }
+
+    private fun handleIntentAction(action: String?) {
+        when (action) {
+
+        }
     }
 
     private fun changeChronometerState(wasWorking: Boolean, timeBase: Long, workingTime: Long) {
