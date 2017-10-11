@@ -1,19 +1,21 @@
 package com.example.kb.worktimer.services
 
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
-import android.os.Binder
 import android.os.IBinder
 import android.util.Log
 import com.example.kb.worktimer.database.MySqlHelper
-import com.example.kb.worktimer.main.ChronometerUpdater
+import com.example.kb.worktimer.main.MainActivity
+import com.example.kb.worktimer.model.TimeFormatter
+import com.example.kb.worktimer.model.Timer
 
 /**
  * Created by Karlo on 2017-10-06.
  */
 const val ACTION_START = "com.example.kb.worktimer.action_start"
-const val PENDING_INTENT_PLAY = 111
+const val PENDING_INTENT_START = 111
 const val ACTION_STOP = "com.example.kb.worktimer.action_stop"
 const val PENDING_INTENT_STOP = 788
 const val NOTIFICATION_ID = 14
@@ -21,15 +23,13 @@ const val NOTIFICATION_ID = 14
 class WorkTimeService : Service() {
 
     private val LOG_TAG = "WorkTimeService"
-    private lateinit var updater: ChronometerUpdater
-    private val binder = WorkTimeServiceBinder()
-    private val monitor = ChronometerMonitor()
     private lateinit var databaseHelper: MySqlHelper
+    private lateinit var notificationManager: NotificationManager
 
     private val startIntent by lazy {
         PendingIntent.getService(
                 applicationContext,
-                PENDING_INTENT_PLAY,
+                PENDING_INTENT_START,
                 Intent(ACTION_START),
                 0)
     }
@@ -42,29 +42,26 @@ class WorkTimeService : Service() {
                 0)
     }
 
-    inner class WorkTimeServiceBinder : Binder() {
-        fun getService(): WorkTimeService {
-            return this@WorkTimeService
-        }
-    }
-
-    override fun onBind(p0: Intent?): IBinder = binder
+    override fun onBind(p0: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
-        Log.v(LOG_TAG, "onCreate called")
         databaseHelper = MySqlHelper.getInstance(applicationContext)
+        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        setUpTimerNotificationCallback()
+        setUpNotification()
+    }
+
+    private fun setUpTimerNotificationCallback() {
+        Timer.callbackNotification = { it ->
+            val time = TimeFormatter.getTimeFromSeconds(it)
+            updateNotification(time)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.v(LOG_TAG, "onStartCommand called")
         handleIntentAction(intent?.action)
         return super.onStartCommand(intent, flags, startId)
-    }
-
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        super.onTaskRemoved(rootIntent)
-        stopSelf()
     }
 
     override fun onDestroy() {
@@ -72,52 +69,36 @@ class WorkTimeService : Service() {
         stopForeground(true)
     }
 
-    fun initFakeData() {
-        databaseHelper.insertFakeData()
+    private fun updateNotification(contentText: String) {
+        notificationManager.notify(NOTIFICATION_ID, MyNotification.updateNotification(contentText))
     }
 
-    fun setChronometerUpdater(updater: ChronometerUpdater) {
-        this.updater = updater
-    }
-
-    fun setupChronometer() {
-        val savedWorkingTime = databaseHelper.getTodayWorkingTime()
-        Log.v(LOG_TAG, "Saved working time: $savedWorkingTime")
-        val chronometerBase = monitor.getChronoTimeBaseAndSetup(savedWorkingTime)
-        updater.updateChronometerTime(chronometerBase)
-    }
-
-    fun setUpForeground() {
-        startForeground(
+    private fun setUpNotification() {
+        notificationManager.notify(
                 NOTIFICATION_ID,
-                MyNotification.getWorkTimerNotification(
+                MyNotification.createWorkTimeNotification(
                         applicationContext,
-                        monitor.getChronometerBase(),
                         startIntent,
-                        stopIntent)
+                        stopIntent
+                )
         )
         Log.v(LOG_TAG, "Starting foreground")
     }
 
-    fun timerButtonClicked(timeBase: Long) {
-        monitor.startStop(timeBase, { wasWorking: Boolean, timeBase: Long, workingTime: Long ->
-            changeChronometerState(wasWorking, timeBase, workingTime)
-        })
-    }
-
     private fun handleIntentAction(action: String?) {
         when (action) {
-
+            ACTION_START -> Timer.startTimer()
+            ACTION_STOP -> {
+                Timer.stopTimer()
+                startMainActivity()
+            }
         }
     }
 
-    private fun changeChronometerState(wasWorking: Boolean, timeBase: Long, workingTime: Long) {
-        if (wasWorking) {
-            updater.onChronometerStopped()
-            databaseHelper.updateTodayWorkingTime(workingTime)
-        } else {
-            updater.onChronometerStarted(timeBase)
-        }
+    private fun startMainActivity() {
+        val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
     }
 
 }

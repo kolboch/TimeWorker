@@ -3,6 +3,7 @@ package com.example.kb.worktimer.services
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
+import android.os.Build
 import android.support.v4.app.NotificationCompat
 import com.example.kb.worktimer.R
 
@@ -12,22 +13,35 @@ import com.example.kb.worktimer.R
 const val CHANNEL_ID = "com.example.kb.worktimer.default"
 
 class MyNotification {
-    //TODO custom notification, where chronometer will have listener, there i would pass callback for it, or still those nasty buttons ;)
     companion object {
-        fun getWorkTimerNotification(context: Context,
-                                     chronometerBase: Long,
-                                     actionStart: PendingIntent,
-                                     actionStop: PendingIntent): Notification {
-            return NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_launcher_background)
+        private var builder: NotificationCompat.Builder? = null
+
+        fun updateNotification(contentText: String): Notification? {
+            builder?.setContentText(contentText)
+            return builder?.build()
+        }
+
+        fun createWorkTimeNotification(context: Context,
+                                       intentStart: PendingIntent,
+                                       intentStop: PendingIntent): Notification {
+            initBuilder(context)
+            return builder!!.setSmallIcon(R.drawable.ic_launcher_background)
                     .setContentTitle(context.getString(R.string.app_name))
                     .setContentText(context.getString(R.string.current_working_time))
-                    .setUsesChronometer(true)
-                    .setWhen(chronometerBase)
-                    .setAutoCancel(false)
-                    .addAction(R.drawable.ic_tag_faces_black_24dp, context.getString(R.string.start), actionStart)
-                    .addAction(R.drawable.ic_pause_black_24dp, context.getString(R.string.stop), actionStop)
+                    .setAutoCancel(true)
+                    .addAction(R.drawable.ic_tag_faces_black_24dp, context.getString(R.string.start), intentStart)
+                    .addAction(R.drawable.ic_pause_black_24dp, context.getString(R.string.stop), intentStop)
                     .build()
+        }
+
+        private fun initBuilder(context: Context) {
+            if (builder != null) {
+                return
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                builder = NotificationCompat.Builder(context, CHANNEL_ID)
+            } else { // Android API below version O
+                builder = NotificationCompat.Builder(context)
+            }
         }
     }
 }

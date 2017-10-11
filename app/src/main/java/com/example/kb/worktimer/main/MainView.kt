@@ -5,8 +5,6 @@ package com.example.kb.worktimer.main
  */
 interface MainView {
 
-    fun onChronometerTimeUpdate(time: Long)
+    fun onTimerUpdate(time: String)
 
-    fun onChronometerStopped()
-    fun onChronometerStarted()
 }

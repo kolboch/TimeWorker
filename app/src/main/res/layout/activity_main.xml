@@ -17,17 +17,16 @@
         android:background="@drawable/button_round"
         android:elevation="2dp"
         android:text="@string/start"
-        app:layout_constraintBottom_toTopOf="@+id/chronometer"
+        app:layout_constraintBottom_toTopOf="@+id/timerDisplay"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed" />
 
-    <Chronometer
-        android:id="@+id/chronometer"
+    <TextView
+        android:id="@+id/timerDisplay"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:format="@string/chronometer_format"
         android:padding="16dp"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"

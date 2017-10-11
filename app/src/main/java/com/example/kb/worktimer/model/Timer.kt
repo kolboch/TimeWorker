@@ -14,14 +14,19 @@ object Timer {
     private var isRunning = false
     private var currentTimeSeconds = 0L
     private var observableInterval = Observable.interval(1, TimeUnit.SECONDS)
-    private lateinit var subscriber: Disposable
-
+    private var subscriber: Disposable? = null
     var callbackUI: ((Long) -> Unit)? = null
+        set(callback) {
+            update()
+        }
     var callbackNotification: ((Long) -> Unit)? = null
+        set(callback) {
+            update()
+        }
 
     fun stopTimer() {
         isRunning = false
-        subscriber.dispose()
+        subscriber?.dispose()
     }
 
     fun startTimer() {
@@ -33,12 +38,21 @@ object Timer {
         isRunning = true
     }
 
-    fun setCurrentTime(timeSeconds: Long) {
+    fun setCurrentTimeAndUpdate(timeSeconds: Long) {
         currentTimeSeconds = timeSeconds
+        update()
     }
 
     private fun update() {
         callbackNotification?.invoke(currentTimeSeconds)
         callbackUI?.invoke(currentTimeSeconds)
+    }
+
+    fun changeRunningState() {
+        if (isRunning) {
+            stopTimer()
+        } else {
+            startTimer()
+        }
     }
 }

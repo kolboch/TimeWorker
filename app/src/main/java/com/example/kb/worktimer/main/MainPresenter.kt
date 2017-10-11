@@ -1,49 +1,29 @@
 package com.example.kb.worktimer.main
 
-import android.util.Log
-import com.example.kb.worktimer.services.WorkTimeService
+import com.example.kb.worktimer.model.TimeFormatter
+import com.example.kb.worktimer.model.Timer
 
 /**
  * Created by Karlo on 2017-10-01.
  */
-class MainPresenter(private val view: MainView) : ChronometerUpdater {
+class MainPresenter(private val view: MainView) {
 
     private val LOG_TAG = "MainPresenter"
-    private lateinit var workService: WorkTimeService
 
-
-    fun attach(service: WorkTimeService) {
-        Log.v(LOG_TAG, "attach called")
-        workService = service
-        workService.setChronometerUpdater(this)
+    private fun updateActivityTimer(seconds: Long) {
+        val formatted = TimeFormatter.getTimeFromSeconds(seconds)
+        view.onTimerUpdate(formatted)
     }
 
-    fun detach() {
-        workService.stopSelf()
+    fun onActivityToTimerBind() {
+        Timer.callbackUI = { it -> updateActivityTimer(it) }
     }
 
-    fun onTimerButtonClicked(timeBase: Long) {
-        workService.timerButtonClicked(timeBase)
+    fun startStopTimer() {
+        Timer.changeRunningState()
     }
 
-    fun onChronometerSetup() {
-        workService.setupChronometer()
-    }
+    fun setUpTimer() {
 
-    override fun onChronometerStopped() {
-        view.onChronometerStopped()
-    }
-
-    override fun onChronometerStarted(timeBase: Long) {
-        view.onChronometerTimeUpdate(timeBase)
-        view.onChronometerStarted()
-    }
-
-    override fun updateChronometerTime(chronoBase: Long) {
-        view.onChronometerTimeUpdate(chronoBase)
-    }
-
-    fun startWorkServiceForeground() {
-        workService.setUpForeground()
     }
 }

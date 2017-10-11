@@ -1,81 +1,37 @@
 package com.example.kb.worktimer.main
 
 import android.animation.ObjectAnimator
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.os.Bundle
-import android.os.IBinder
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import com.example.kb.worktimer.R
 import com.example.kb.worktimer.services.WorkTimeService
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity(), MainView, ServiceConnection {
+class MainActivity : AppCompatActivity(), MainView {
 
+    //TODO how to init timer with proper time ? -> context from main to presenter?
     private val LOG_TAG = "MainActivity"
     private lateinit var presenter: MainPresenter
-    private var serviceBound = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         presenter = MainPresenter(this)
+        presenter.onActivityToTimerBind()
+        startService(Intent(applicationContext, WorkTimeService::class.java))
         onTimerButtonSetup()
     }
 
-    override fun onStart() {
-        super.onStart()
-        onServiceSetup()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (serviceBound) {
-            unbindService(this)
-        }
-    }
-
-    override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-        presenter.attach((binder as WorkTimeService.WorkTimeServiceBinder).getService())
-        presenter.onChronometerSetup()
-        presenter.startWorkServiceForeground()
-    }
-
-    override fun onServiceDisconnected(name: ComponentName?) {
-        presenter.detach()
-    }
-
-    override fun onChronometerStopped() {
-        chronometer.stop()
-        timerButton.setText(R.string.start)
-        animateButtonLeft(timerButton)
-        Log.v(LOG_TAG, "chronometer stopAndUpdateWorkingTime call")
-    }
-
-    override fun onChronometerStarted() {
-        chronometer.start()
-        timerButton.setText(R.string.stop)
-        animateButtonRight(timerButton)
-        Log.v(LOG_TAG, "chronometer start call")
-    }
-
-    override fun onChronometerTimeUpdate(time: Long) {
-        chronometer.base = time
-    }
-
-    private fun onServiceSetup() {
-        val intent = Intent(applicationContext, WorkTimeService::class.java)
-        serviceBound = bindService(intent, this, Context.BIND_AUTO_CREATE)
+    override fun onTimerUpdate(time: String) {
+        timerDisplay.text = time
     }
 
     private fun onTimerButtonSetup() {
         timerButton.setOnClickListener {
-            presenter.onTimerButtonClicked(chronometer.base)
+            presenter.startStopTimer()
         }
     }
 
