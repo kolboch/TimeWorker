@@ -16,32 +16,39 @@ class MyNotification {
     companion object {
         private var builder: NotificationCompat.Builder? = null
 
-        fun updateNotification(contentText: String): Notification? {
+        fun updateNotification(contentText: String) {
             builder?.setContentText(contentText)
-            return builder?.build()
         }
 
         fun createWorkTimeNotification(context: Context,
                                        intentStart: PendingIntent,
-                                       intentStop: PendingIntent): Notification {
+                                       intentStop: PendingIntent,
+                                       contentIntent: PendingIntent): Notification {
+
+            if (builder != null) {
+                return builder!!.build()
+            }
             initBuilder(context)
             return builder!!.setSmallIcon(R.drawable.ic_launcher_background)
                     .setContentTitle(context.getString(R.string.app_name))
                     .setContentText(context.getString(R.string.current_working_time))
                     .setAutoCancel(true)
-                    .addAction(R.drawable.ic_tag_faces_black_24dp, context.getString(R.string.start), intentStart)
-                    .addAction(R.drawable.ic_pause_black_24dp, context.getString(R.string.stop), intentStop)
+                    .addAction(R.drawable.ic_tag_faces_white_24dp, context.getString(R.string.start), intentStart)
+                    .addAction(R.drawable.ic_pause_white_24dp, context.getString(R.string.stop), intentStop)
+                    .setContentIntent(contentIntent)
                     .build()
         }
 
         private fun initBuilder(context: Context) {
-            if (builder != null) {
-                return
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 builder = NotificationCompat.Builder(context, CHANNEL_ID)
             } else { // Android API below version O
                 builder = NotificationCompat.Builder(context)
             }
+        }
+
+        fun rebuild(): Notification? {
+            return builder?.build()
         }
     }
 }

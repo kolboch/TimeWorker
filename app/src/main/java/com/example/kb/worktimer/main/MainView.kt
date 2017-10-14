@@ -6,5 +6,7 @@ package com.example.kb.worktimer.main
 interface MainView {
 
     fun onTimerUpdate(time: String)
-
+    fun onTimerStopped()
+    fun onTimerStarted()
+    fun onTimerButtonUpdate(stringResource: Int)
 }
