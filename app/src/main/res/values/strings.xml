@@ -5,4 +5,5 @@
     <string name="current_working_time">Current working time</string>
 
     <string name="chronometer_format">%s</string>
+    <string name="menu_stats_title">Statistics</string>
 </resources>

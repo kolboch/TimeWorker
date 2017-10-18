@@ -1,11 +1,15 @@
 package com.example.kb.worktimer.main
 
 import android.animation.ObjectAnimator
+import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import com.example.kb.worktimer.R
+import com.example.kb.worktimer.statistic.StatisticsActivity
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity(), MainView {
@@ -19,6 +23,22 @@ class MainActivity : AppCompatActivity(), MainView {
         presenter = MainPresenter(this, applicationContext)
         presenter.onActivityToTimerBind()
         onTimerButtonSetup()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        var handled = false
+        when (item?.itemId) {
+            R.id.statistics -> {
+                startActivity(Intent(this, StatisticsActivity::class.java))
+                handled = true
+            }
+        }
+        return handled
     }
 
     override fun onDestroy() {

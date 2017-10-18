@@ -3,7 +3,6 @@ package com.example.kb.worktimer.main
 import android.content.Context
 import android.content.Intent
 import android.preference.PreferenceManager
-import android.util.Log
 import com.example.kb.worktimer.R
 import com.example.kb.worktimer.database.MySqlHelper
 import com.example.kb.worktimer.model.TimeFormatter
@@ -55,7 +54,6 @@ class MainPresenter(private val view: MainView, val context: Context) {
     }
 
     fun onActivityDestroyed() {
-        Log.v(LOG_TAG, "Setting up timer state in presenter. ${Timer.isRunning}")
         dbHelper.updateTodayWorkingTime(Timer.currentTimeSeconds)
         preferences.edit().putBoolean(TIMER_IS_WORKING, Timer.isRunning).apply()
     }

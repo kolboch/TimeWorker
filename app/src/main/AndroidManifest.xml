@@ -19,13 +19,15 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name=".services.WorkTimeService">
+        <service android:name=".services.WorkTimeService">
             <intent-filter>
                 <action android:name="com.example.kb.worktimer.action_start"/>
                 <action android:name="com.example.kb.worktimer.action_stop"/>
             </intent-filter>
         </service>
+
+        <activity android:name=".statistic.StatisticsActivity">
+        </activity>
     </application>
 
 </manifest>

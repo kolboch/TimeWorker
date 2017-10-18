@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/statistics"
+        android:icon="@drawable/ic_chart_white_24dp"
+        android:title="@string/menu_stats_title"/>
+</menu>

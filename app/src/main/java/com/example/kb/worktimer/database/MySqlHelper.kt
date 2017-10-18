@@ -70,6 +70,12 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
         return result.timeWorked
     }
 
+    fun getWorkingStatistics(): List<WorkTime> {
+        return context.database.use {
+            select(TIMES_TABLE_NAME).exec { parseList(classParser()) }
+        }
+    }
+
     private fun logAllEntries() {
         //TODO delete before production
         val entries = context.database.use {
