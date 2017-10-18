@@ -27,6 +27,9 @@
         </service>
 
         <activity android:name=".statistic.StatisticsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".main.MainActivity"/>
         </activity>
     </application>
 

@@ -40,7 +40,7 @@ class MainPresenter(private val view: MainView, val context: Context) {
     }
 
     fun startStopTimer() {
-        Timer.changeRunningState()
+        Timer.changeRunningState({updateWorkingTime()})
     }
 
     private fun refreshTimerState() {
@@ -54,12 +54,16 @@ class MainPresenter(private val view: MainView, val context: Context) {
     }
 
     fun onActivityDestroyed() {
-        dbHelper.updateTodayWorkingTime(Timer.currentTimeSeconds)
+        updateWorkingTime()
         preferences.edit().putBoolean(TIMER_IS_WORKING, Timer.isRunning).apply()
     }
 
     fun onServiceRequested() {
         workTimeServiceIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startService(workTimeServiceIntent)
+    }
+
+    private fun updateWorkingTime() {
+        dbHelper.updateTodayWorkingTime(Timer.currentTimeSeconds)
     }
 }

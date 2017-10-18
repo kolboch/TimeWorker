@@ -1,6 +1,7 @@
 package com.example.kb.worktimer.statistic
 
 import android.os.Bundle
+import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.WindowManager
@@ -10,7 +11,6 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
-import com.github.mikephil.charting.utils.ColorTemplate
 import kotlinx.android.synthetic.main.activity_statistics.*
 import java.util.concurrent.TimeUnit
 
@@ -26,6 +26,9 @@ class StatisticsActivity : AppCompatActivity() {
         val dbHelper = MySqlHelper.getInstance(applicationContext)
         dbHelper.insertFakeData()
 
+
+        dbHelper.logAllEntries()
+
         var data = dbHelper.getWorkingStatistics()
         val entries = mutableListOf<BarEntry>()
         data.forEach {
@@ -34,7 +37,10 @@ class StatisticsActivity : AppCompatActivity() {
             entries.add(BarEntry(dateInDays.toFloat(), it.timeWorked.toFloat()))
         }
         val dataSet = BarDataSet(entries, "Test Label")
-        dataSet.setColors(*ColorTemplate.COLORFUL_COLORS)
+        dataSet.colors = listOf(
+                ContextCompat.getColor(applicationContext, R.color.chart_bar_color)
+        )
+        dataSet.valueTextColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
         val lineData = BarData(dataSet)
 
 //        styling
@@ -48,6 +54,8 @@ class StatisticsActivity : AppCompatActivity() {
         xAxis.valueFormatter = DateAxisValueFormatter()
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.setDrawGridLines(false)
+        xAxis.textColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
+        chart.axisLeft.textColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
 
         chart.data = lineData
         chart.invalidate()

@@ -67,9 +67,10 @@ object Timer {
         callbackUI?.invoke(currentTimeSeconds)
     }
 
-    fun changeRunningState() {
+    fun changeRunningState(onStopCallback: () -> Unit) {
         if (isRunning) {
             stopTimer()
+            onStopCallback.invoke()
         } else {
             startTimer()
         }

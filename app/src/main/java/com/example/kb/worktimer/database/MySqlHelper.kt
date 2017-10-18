@@ -76,7 +76,7 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
         }
     }
 
-    private fun logAllEntries() {
+    fun logAllEntries() {
         //TODO delete before production
         val entries = context.database.use {
             select(TIMES_TABLE_NAME).exec { parseList(classParser<WorkTime>()) }

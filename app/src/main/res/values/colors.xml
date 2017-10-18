@@ -6,4 +6,7 @@
 
     <color name="button_main_clicked">#1f409e</color>
     <color name="button_main">#565cff</color>
+    <color name="chart_bar_color">#7abde4</color>
+    <color name="chart_background">#353841</color>
+    <color name="chart_text">#ffffff</color>
 </resources>
