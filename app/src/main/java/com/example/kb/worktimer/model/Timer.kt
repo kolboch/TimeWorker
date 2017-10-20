@@ -5,6 +5,7 @@ import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
 import java.util.concurrent.TimeUnit
 
+
 /**
  * Created by Karlo on 2017-10-09.
  */
@@ -28,20 +29,13 @@ object Timer {
             update()
         }
     var animateCallbackUI: ((Boolean) -> Unit)? = null
+    var acquireWakeLockCallback: (() -> Unit)? = null
+    var releaseWakeLockCallback: (() -> Unit)? = null
 
     init {
         observableInterval.doOnSubscribe {
             subscribersMonitor++
         }
-    }
-
-    fun stopTimer() {
-        if (!isRunning) {
-            return
-        }
-        animateCallbackUI?.invoke(isRunning)
-        isRunning = false
-        subscriber?.dispose()
     }
 
     fun startTimer() {
@@ -55,6 +49,26 @@ object Timer {
         }
         animateCallbackUI?.invoke(isRunning)
         isRunning = true
+        acquireWakeLockCallback?.invoke()
+    }
+
+    fun stopTimer() {
+        if (!isRunning) {
+            return
+        }
+        animateCallbackUI?.invoke(isRunning)
+        isRunning = false
+        subscriber?.dispose()
+        releaseWakeLockCallback?.invoke()
+    }
+
+    fun changeRunningState(onStopCallback: () -> Unit) {
+        if (isRunning) {
+            stopTimer()
+            onStopCallback.invoke()
+        } else {
+            startTimer()
+        }
     }
 
     fun setCurrentTimeAndUpdate(timeSeconds: Long) {
@@ -65,14 +79,5 @@ object Timer {
     private fun update() {
         callbackNotification?.invoke(currentTimeSeconds)
         callbackUI?.invoke(currentTimeSeconds)
-    }
-
-    fun changeRunningState(onStopCallback: () -> Unit) {
-        if (isRunning) {
-            stopTimer()
-            onStopCallback.invoke()
-        } else {
-            startTimer()
-        }
     }
 }

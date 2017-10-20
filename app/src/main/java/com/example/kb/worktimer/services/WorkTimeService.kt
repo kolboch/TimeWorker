@@ -3,15 +3,18 @@ package com.example.kb.worktimer.services
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.IBinder
+import android.os.PowerManager
 import android.preference.PreferenceManager
 import android.util.Log
 import com.example.kb.worktimer.database.MySqlHelper
 import com.example.kb.worktimer.main.MainActivity
 import com.example.kb.worktimer.model.TimeFormatter
 import com.example.kb.worktimer.model.Timer
+
 
 /**
  * Created by Karlo on 2017-10-06.
@@ -22,11 +25,13 @@ const val PENDING_INTENT_START = 111
 const val ACTION_STOP = "com.example.kb.worktimer.action_stop"
 const val PENDING_INTENT_STOP = 788
 const val NOTIFICATION_ID = 14
+const val WAKE_LOCK_TAG = "com.example.kb.worktimer.wake_lock"
 
 class WorkTimeService : Service() {
 
     private val LOG_TAG = "WorkTimeService"
     private val timer = Timer
+    private var wakeLock: PowerManager.WakeLock? = null
     private lateinit var preferences: SharedPreferences
 
     private val startIntent by lazy {
@@ -53,10 +58,28 @@ class WorkTimeService : Service() {
         refreshTimerState()
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         setUpNotification()
+        acquireWakeLock()
         setUpTimerNotificationCallback()
+        setUpTimerWakeLockCallbacks()
     }
 
     override fun onBind(p0: Intent?): IBinder? = null
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.v(LOG_TAG, "Can i catch that log from onStartCommand;) ?")
+        handleIntentAction(intent?.action)
+        return START_STICKY
+    }
+
+
+    override fun onDestroy() {
+        saveTimerState()
+        stopForeground(true)
+        if (wakeLock != null && wakeLock!!.isHeld) {
+            wakeLock?.release()
+        }
+        super.onDestroy()
+    }
 
     private fun refreshTimerState() {
         setUpWorkingTime()
@@ -81,19 +104,6 @@ class WorkTimeService : Service() {
             val time = TimeFormatter.getTimeFromSeconds(it)
             updateNotification(time)
         }
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.v(LOG_TAG, "Can i catch that log from onStartCommand;) ?")
-        handleIntentAction(intent?.action)
-        return START_STICKY
-    }
-
-
-    override fun onDestroy() {
-        saveTimerState()
-        stopForeground(true)
-        super.onDestroy()
     }
 
     private fun saveTimerState() {
@@ -141,6 +151,23 @@ class WorkTimeService : Service() {
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
+    }
+
+    private fun acquireWakeLock() {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
+        wakeLock?.acquire()
+    }
+
+    private fun releaseWakeLock() {
+        if (wakeLock != null && wakeLock!!.isHeld) {
+            wakeLock?.release()
+        }
+    }
+
+    private fun setUpTimerWakeLockCallbacks() {
+        timer.acquireWakeLockCallback = { acquireWakeLock() }
+        timer.releaseWakeLockCallback = { releaseWakeLock() }
     }
 
 }
