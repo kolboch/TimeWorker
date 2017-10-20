@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.WindowManager
 import com.example.kb.worktimer.R
 import com.example.kb.worktimer.database.MySqlHelper
+import com.example.kb.worktimer.model.WorkTime
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
@@ -17,51 +18,61 @@ import java.util.concurrent.TimeUnit
 class StatisticsActivity : AppCompatActivity() {
 
     private val LOG_TAG = "StatisticsActivity"
-    //TODO refactor to MVP
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_statistics)
         setWindowDisplay()
-        val dbHelper = MySqlHelper.getInstance(applicationContext)
-        dbHelper.insertFakeData()
+        var workingRows = getWorkingStatistics()
+        val entries = convertRowsToEntries(workingRows)
+        val dataSet = BarDataSet(entries, "TestLabel of dataset")
+        styleDataSet(dataSet)
+        val barData = BarData(dataSet)
+        styleChart()
+        styleXAxis()
+        chart.data = barData
+        chart.invalidate()
+    }
 
-
-        dbHelper.logAllEntries()
-
-        var data = dbHelper.getWorkingStatistics()
-        val entries = mutableListOf<BarEntry>()
-        data.forEach {
-            Log.v(LOG_TAG, "timeWorked: ${it.timeWorked}")
-            val dateInDays = TimeUnit.MILLISECONDS.toDays(it.date)
-            entries.add(BarEntry(dateInDays.toFloat(), it.timeWorked.toFloat()))
-        }
-        val dataSet = BarDataSet(entries, "Test Label")
+    private fun styleDataSet(dataSet: BarDataSet) {
         dataSet.colors = listOf(
                 ContextCompat.getColor(applicationContext, R.color.chart_bar_color)
         )
         dataSet.valueTextColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
-        val lineData = BarData(dataSet)
+    }
 
-//        styling
-        chart.setDrawBarShadow(false)
-        chart.setDrawValueAboveBar(true)
-        chart.setPinchZoom(false)
-        chart.description.isEnabled = false
-//        end of styling
-
+    private fun styleXAxis() {
         val xAxis = chart.xAxis
         xAxis.valueFormatter = DateAxisValueFormatter()
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.setDrawGridLines(false)
         xAxis.textColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
-        chart.axisLeft.textColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
+    }
 
-        chart.data = lineData
-        chart.invalidate()
+    private fun convertRowsToEntries(workingRows: List<WorkTime>): MutableList<BarEntry>? {
+        val entries = mutableListOf<BarEntry>()
+        workingRows.forEach {
+            Log.v(LOG_TAG, "timeWorked: ${it.timeWorked}")
+            val dateInDays = TimeUnit.MILLISECONDS.toDays(it.date)
+            entries.add(BarEntry(dateInDays.toFloat(), it.timeWorked.toFloat()))
+        }
+        return entries
+    }
+
+    private fun getWorkingStatistics(): List<WorkTime> {
+        val dbHelper = MySqlHelper.getInstance(applicationContext)
+        return dbHelper.getWorkingStatistics()
     }
 
     private fun setWindowDisplay() {
         window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
+    }
+
+    private fun styleChart() {
+        chart.setDrawBarShadow(false)
+        chart.setDrawValueAboveBar(true)
+        chart.setPinchZoom(false)
+        chart.description.isEnabled = false
+        chart.axisLeft.textColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
     }
 }
