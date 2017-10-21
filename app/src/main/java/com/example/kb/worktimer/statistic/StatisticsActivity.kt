@@ -9,6 +9,7 @@ import com.example.kb.worktimer.R
 import com.example.kb.worktimer.database.MySqlHelper
 import com.example.kb.worktimer.model.WorkTime
 import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
@@ -25,13 +26,19 @@ class StatisticsActivity : AppCompatActivity() {
         setWindowDisplay()
         var workingRows = getWorkingStatistics()
         val entries = convertRowsToEntries(workingRows)
-        val dataSet = BarDataSet(entries, "TestLabel of dataset")
+        val dataSet = BarDataSet(entries, getString(R.string.working_data_label))
         styleDataSet(dataSet)
         val barData = BarData(dataSet)
         styleChart()
-        styleXAxis()
+        styleAxes()
         chart.data = barData
         chart.invalidate()
+    }
+
+    private fun styleAxes() {
+        styleXAxis()
+        styleYAxis(chart.axisLeft)
+        styleYAxis(chart.axisRight)
     }
 
     private fun styleDataSet(dataSet: BarDataSet) {
@@ -39,6 +46,7 @@ class StatisticsActivity : AppCompatActivity() {
                 ContextCompat.getColor(applicationContext, R.color.chart_bar_color)
         )
         dataSet.valueTextColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
+        dataSet.valueFormatter = WorkTimeValueFormatter()
     }
 
     private fun styleXAxis() {
@@ -46,7 +54,17 @@ class StatisticsActivity : AppCompatActivity() {
         xAxis.valueFormatter = DateAxisValueFormatter()
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.setDrawGridLines(false)
+        xAxis.granularity = 1F
         xAxis.textColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
+    }
+
+    private fun styleYAxis(yAxis: YAxis) {
+        yAxis.textColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
+        yAxis.labelCount = 25
+        yAxis.axisMaximum = TimeUnit.HOURS.toSeconds(24).toFloat()
+        yAxis.axisMinimum = 0f
+        yAxis.granularity = TimeUnit.HOURS.toSeconds(1).toFloat()
+        yAxis.valueFormatter = HourAxisValueFormatter()
     }
 
     private fun convertRowsToEntries(workingRows: List<WorkTime>): MutableList<BarEntry>? {
@@ -73,6 +91,6 @@ class StatisticsActivity : AppCompatActivity() {
         chart.setDrawValueAboveBar(true)
         chart.setPinchZoom(false)
         chart.description.isEnabled = false
-        chart.axisLeft.textColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
+        chart.legend.textColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
     }
 }

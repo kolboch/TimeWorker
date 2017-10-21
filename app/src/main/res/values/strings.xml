@@ -6,4 +6,5 @@
 
     <string name="chronometer_format">%s</string>
     <string name="menu_stats_title">Statistics</string>
+    <string name="working_data_label">Working time</string>
 </resources>

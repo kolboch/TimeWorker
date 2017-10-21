@@ -6,7 +6,9 @@ import java.util.concurrent.TimeUnit
  * Created by Karol on 2017-10-10.
  */
 object TimeFormatter {
-
+    /**
+     * returns String time representation in hh:mm:ss format
+     */
     fun getTimeFromSeconds(seconds: Long): String {
         if (seconds < 0) {
             return "00:00:00"
