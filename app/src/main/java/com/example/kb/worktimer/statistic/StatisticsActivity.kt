@@ -24,14 +24,14 @@ class StatisticsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_statistics)
         setWindowDisplay()
-        var workingRows = getWorkingStatistics()
+        val workingRows = getWorkingStatistics()
         val entries = convertRowsToEntries(workingRows)
         val dataSet = BarDataSet(entries, getString(R.string.working_data_label))
         styleDataSet(dataSet)
         val barData = BarData(dataSet)
-        styleChart()
         styleAxes()
         chart.data = barData
+        styleChart()
         chart.invalidate()
     }
 
@@ -55,6 +55,7 @@ class StatisticsActivity : AppCompatActivity() {
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.setDrawGridLines(false)
         xAxis.granularity = 1F
+        xAxis.labelCount = 7
         xAxis.textColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
     }
 
@@ -92,5 +93,8 @@ class StatisticsActivity : AppCompatActivity() {
         chart.setPinchZoom(false)
         chart.description.isEnabled = false
         chart.legend.textColor = ContextCompat.getColor(applicationContext, R.color.chart_text)
+        chart.setVisibleXRangeMaximum(31f)
+        chart.setVisibleXRangeMinimum(3f)
+        chart.setVisibleYRangeMaximum(TimeUnit.HOURS.toSeconds(12).toFloat(), YAxis.AxisDependency.LEFT)
     }
 }

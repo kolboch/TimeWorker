@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
@@ -24,6 +24,7 @@
             <intent-filter>
                 <action android:name="com.example.kb.worktimer.action_start"/>
                 <action android:name="com.example.kb.worktimer.action_stop"/>
+                <action android:name="com.example.kb.worktimer.action_save"/>
             </intent-filter>
         </service>
 

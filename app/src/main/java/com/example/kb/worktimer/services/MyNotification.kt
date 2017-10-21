@@ -29,7 +29,7 @@ class MyNotification {
                 return builder!!.build()
             }
             initBuilder(context)
-            return builder!!.setSmallIcon(R.drawable.ic_launcher_background)
+            return builder!!.setSmallIcon(R.mipmap.ic_launcher_foreground)
                     .setContentTitle(context.getString(R.string.app_name))
                     .setContentText(context.getString(R.string.current_working_time))
                     .setAutoCancel(true)

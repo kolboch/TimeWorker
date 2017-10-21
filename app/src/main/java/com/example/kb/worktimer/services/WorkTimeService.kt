@@ -1,11 +1,13 @@
 package com.example.kb.worktimer.services
 
+import android.app.AlarmManager
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.preference.PreferenceManager
@@ -14,6 +16,7 @@ import com.example.kb.worktimer.database.MySqlHelper
 import com.example.kb.worktimer.main.MainActivity
 import com.example.kb.worktimer.model.TimeFormatter
 import com.example.kb.worktimer.model.Timer
+import java.util.*
 
 
 /**
@@ -26,6 +29,8 @@ const val ACTION_STOP = "com.example.kb.worktimer.action_stop"
 const val PENDING_INTENT_STOP = 788
 const val NOTIFICATION_ID = 14
 const val WAKE_LOCK_TAG = "com.example.kb.worktimer.wake_lock"
+const val PENDING_INTENT_SAVE_MIDNIGHT = 901
+const val ACTION_SAVE = "com.example.kb.worktimer.action_save"
 
 class WorkTimeService : Service() {
 
@@ -48,6 +53,10 @@ class WorkTimeService : Service() {
         PendingIntent.getActivity(this, 0, intent, 0)
     }
 
+    private val saveTimeIntent by lazy {
+        PendingIntent.getService(baseContext, PENDING_INTENT_SAVE_MIDNIGHT, Intent(ACTION_SAVE), 0)
+    }
+
     private lateinit var databaseHelper: MySqlHelper
     private lateinit var notificationManager: NotificationManager
 
@@ -61,12 +70,13 @@ class WorkTimeService : Service() {
         acquireWakeLock()
         setUpTimerNotificationCallback()
         setUpTimerWakeLockCallbacks()
+        setUpAlarmManagerTimerCallbacks()
+        scheduleMidnightAction()
     }
 
     override fun onBind(p0: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.v(LOG_TAG, "Can i catch that log from onStartCommand;) ?")
         handleIntentAction(intent?.action)
         return START_STICKY
     }
@@ -75,6 +85,7 @@ class WorkTimeService : Service() {
     override fun onDestroy() {
         saveTimerState()
         stopForeground(true)
+        cancelMidnightAction()
         if (wakeLock != null && wakeLock!!.isHeld) {
             wakeLock?.release()
         }
@@ -84,9 +95,7 @@ class WorkTimeService : Service() {
     private fun refreshTimerState() {
         setUpWorkingTime()
         val wasWorking = preferences.getBoolean(TIMER_IS_WORKING, false)
-        Log.v(LOG_TAG, "wasWorking shared preferences: --> $wasWorking")
         if (wasWorking) {
-            Log.v(LOG_TAG, "starting timer inside Refresh Timer State")
             timer.startTimer()
         }
     }
@@ -99,7 +108,6 @@ class WorkTimeService : Service() {
     }
 
     private fun setUpTimerNotificationCallback() {
-        Log.v(LOG_TAG, "Setting notification callback")
         timer.callbackNotification = { it ->
             val time = TimeFormatter.getTimeFromSeconds(it)
             updateNotification(time)
@@ -126,7 +134,6 @@ class WorkTimeService : Service() {
                         contentIntent
                 )
         )
-        Log.v(LOG_TAG, "Starting notification")
     }
 
     private fun handleIntentAction(action: String?) {
@@ -134,12 +141,19 @@ class WorkTimeService : Service() {
             ACTION_START -> {
                 setUpWorkingTime()
                 timer.startTimer()
+                setUpAlarmManagerTimerCallbacks()
             }
             ACTION_STOP -> {
                 timer.stopTimer()
                 saveTimerState()
                 startMainActivity()
+                cancelMidnightAction()
                 stopSelf()
+            }
+            ACTION_SAVE -> {
+                Log.v(LOG_TAG, "Action save got called")
+                saveTimerState()
+                timer.setCurrentTimeAndUpdate(0)
             }
             else -> {
                 refreshTimerState()
@@ -170,4 +184,33 @@ class WorkTimeService : Service() {
         timer.releaseWakeLockCallback = { releaseWakeLock() }
     }
 
+    private fun setUpAlarmManagerTimerCallbacks() {
+        timer.scheduleAlarmManager = { scheduleMidnightAction() }
+        timer.cancelAlarmManager = { cancelMidnightAction() }
+    }
+
+    private fun scheduleMidnightAction() {
+        val midnightCalendar = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            Calendar.getInstance(resources.configuration.locales[0])
+        } else {
+            Calendar.getInstance(resources.configuration.locale)
+        }
+        midnightCalendar.set(Calendar.HOUR_OF_DAY, 23)
+        midnightCalendar.set(Calendar.MINUTE, 59)
+        midnightCalendar.set(Calendar.SECOND, 25)
+        val alarmManager = getSystemService(android.content.Context.ALARM_SERVICE) as AlarmManager
+        alarmManager.setRepeating(
+                AlarmManager.RTC_WAKEUP,
+                midnightCalendar.timeInMillis,
+                AlarmManager.INTERVAL_DAY,
+                saveTimeIntent
+        )
+        Log.v(LOG_TAG, "Scheduling midnight action")
+    }
+
+    private fun cancelMidnightAction() {
+        val alarmManager = getSystemService(android.content.Context.ALARM_SERVICE) as AlarmManager
+        alarmManager.cancel(saveTimeIntent)
+        Log.v(LOG_TAG, "Cancelling midnight action")
+    }
 }

@@ -2,6 +2,7 @@ package com.example.kb.worktimer.database
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
+import android.os.Build
 import android.util.Log
 import com.example.kb.worktimer.model.WorkTime
 import com.example.kb.worktimer.model.getTodayDateInMillis
@@ -24,10 +25,17 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
     companion object {
         private var instance: MySqlHelper? = null
 
+        private var userLocale: Locale? = null
+
         @Synchronized
         fun getInstance(ctx: Context): MySqlHelper {
             if (instance == null) {
                 instance = MySqlHelper(ctx.applicationContext)
+                userLocale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    ctx.resources.configuration.locales[0]
+                } else {
+                    ctx.resources.configuration.locale
+                }
             }
             return instance!!
         }
@@ -49,22 +57,22 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
     }
 
     fun updateTodayWorkingTime(workingTime: Long) {
-        val todayMillis = Calendar.getInstance().getTodayDateInMillis()
-
+        val todayDaysMillis = getTodayTimeMillis()
+        Log.v("TIMER", "Updating today working time $todayDaysMillis")
         context.database.use {
             replace(TIMES_TABLE_NAME,
-                    TIMES_TABLE_DATE to todayMillis,
+                    TIMES_TABLE_DATE to todayDaysMillis,
                     TIMES_TABLE_TIME to workingTime)
         }
     }
 
     fun getTodayWorkingTime(): Long {
-        val todayMillis = Calendar.getInstance().getTodayDateInMillis()
-        var result = getTodayWorkTime(todayMillis)
+        val todayDaysMillis = getTodayTimeMillis()
+        var result = getTodayWorkTime(todayDaysMillis)
 
         if (result == null) {
-            setupTodayWorkingTime(todayMillis)
-            result = WorkTime(todayMillis, 0)
+            setupTodayWorkingTime(todayDaysMillis)
+            result = WorkTime(todayDaysMillis, 0)
         }
 
         return result.timeWorked
@@ -100,4 +108,7 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
         }
     }
 
+    private fun getTodayTimeMillis(): Long {
+        return Calendar.getInstance(userLocale).getTodayDateInMillis()
+    }
 }

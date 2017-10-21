@@ -31,6 +31,8 @@ object Timer {
     var animateCallbackUI: ((Boolean) -> Unit)? = null
     var acquireWakeLockCallback: (() -> Unit)? = null
     var releaseWakeLockCallback: (() -> Unit)? = null
+    var scheduleAlarmManager: (() -> Unit)? = null
+    var cancelAlarmManager: (() -> Unit)? = null
 
     init {
         observableInterval.doOnSubscribe {
@@ -49,6 +51,7 @@ object Timer {
         }
         animateCallbackUI?.invoke(isRunning)
         isRunning = true
+        scheduleAlarmManager?.invoke()
         acquireWakeLockCallback?.invoke()
     }
 
@@ -59,6 +62,7 @@ object Timer {
         animateCallbackUI?.invoke(isRunning)
         isRunning = false
         subscriber?.dispose()
+        cancelAlarmManager?.invoke()
         releaseWakeLockCallback?.invoke()
     }
 
