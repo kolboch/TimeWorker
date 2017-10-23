@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Medidor de trabajo</string>
+    <string name="current_working_time">" Tiempo de trabajo actual"</string>
+    <string name="working_data_label">Tiempo de trabajo</string>
+    <string name="menu_stats_title">Estadística</string>
+</resources>

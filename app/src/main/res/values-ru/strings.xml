@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">измеритель работы</string>
+    <string name="start">Начало</string>
+    <string name="stop">стоп</string>
+    <string name="working_data_label">рабочее время</string>
+    <string name="menu_stats_title">статистика</string>
+    <string name="current_working_time">текущее рабочее время</string>
+</resources>

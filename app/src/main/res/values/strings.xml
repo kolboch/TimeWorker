@@ -1,10 +1,9 @@
 <resources>
-    <string name="app_name">WorkTimer</string>
+    <string name="app_name" translatable="false">WorkTimer</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="current_working_time">Current working time</string>
 
-    <string name="chronometer_format">%s</string>
     <string name="menu_stats_title">Statistics</string>
     <string name="working_data_label">Working time</string>
 </resources>
