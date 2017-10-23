@@ -197,12 +197,12 @@ class WorkTimeService : Service() {
         }
         midnightCalendar.set(Calendar.HOUR_OF_DAY, 23)
         midnightCalendar.set(Calendar.MINUTE, 59)
-        midnightCalendar.set(Calendar.SECOND, 25)
+        midnightCalendar.set(Calendar.SECOND, 40)
+        midnightCalendar.set(Calendar.MILLISECOND, 0)
         val alarmManager = getSystemService(android.content.Context.ALARM_SERVICE) as AlarmManager
-        alarmManager.setRepeating(
+        alarmManager.setExact(
                 AlarmManager.RTC_WAKEUP,
                 midnightCalendar.timeInMillis,
-                AlarmManager.INTERVAL_DAY,
                 saveTimeIntent
         )
         Log.v(LOG_TAG, "Scheduling midnight action")

@@ -5,7 +5,6 @@ import android.database.sqlite.SQLiteDatabase
 import android.os.Build
 import android.util.Log
 import com.example.kb.worktimer.model.WorkTime
-import com.example.kb.worktimer.model.getTodayDateInMillis
 import org.jetbrains.anko.db.*
 import java.util.*
 
@@ -64,6 +63,7 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
                     TIMES_TABLE_DATE to todayDaysMillis,
                     TIMES_TABLE_TIME to workingTime)
         }
+        logAllEntries()
     }
 
     fun getTodayWorkingTime(): Long {
@@ -109,6 +109,11 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
     }
 
     private fun getTodayTimeMillis(): Long {
-        return Calendar.getInstance(userLocale).getTodayDateInMillis()
+        val calendar = Calendar.getInstance(userLocale)
+        calendar.set(Calendar.HOUR_OF_DAY, 11)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        return calendar.timeInMillis
     }
 }
