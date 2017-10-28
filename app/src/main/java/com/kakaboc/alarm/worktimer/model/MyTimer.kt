@@ -9,15 +9,14 @@ import java.util.concurrent.TimeUnit
 /**
  * Created by Karlo on 2017-10-09.
  */
-object Timer {
+object MyTimer {
 
     var isRunning = false
         private set
     var currentTimeSeconds = 0L
         private set
-    private var observableInterval = Observable.interval(1, TimeUnit.SECONDS)
-    private var subscriber: Disposable? = null
-    private var subscribersMonitor = 0
+    var measureDate: Long = -1L
+
     var callbackUI: ((Long) -> Unit)? = null
         set(callback) {
             field = callback
@@ -28,12 +27,17 @@ object Timer {
             field = callback
             update()
         }
+
     var animateCallbackUI: ((Boolean) -> Unit)? = null
     var acquireWakeLockCallback: (() -> Unit)? = null
     var releaseWakeLockCallback: (() -> Unit)? = null
     var scheduleAlarmManager: (() -> Unit)? = null
     var cancelAlarmManager: (() -> Unit)? = null
-    var saveTimerState: ((Long) -> Unit)? = null
+    var saveTimerState: ((Long, Long) -> Unit)? = null
+
+    private var observableInterval = Observable.interval(1, TimeUnit.SECONDS)
+    private var subscriber: Disposable? = null
+    private var subscribersMonitor = 0
 
     init {
         observableInterval.doOnSubscribe {
@@ -41,8 +45,12 @@ object Timer {
         }
     }
 
-    fun startTimer() {
+    fun startTimer(measureDate: Long) {
         Log.v("Timer", "Starting timer, isRunning: $isRunning")
+        if (this.measureDate != -1L && this.measureDate != measureDate) {
+            saveTimerState?.invoke(currentTimeSeconds, measureDate)
+            setCurrentTimeAndUpdate(0, measureDate)
+        }
         if (isRunning && subscriber?.isDisposed == false) {
             return
         }
@@ -62,26 +70,27 @@ object Timer {
         }
         animateCallbackUI?.invoke(isRunning)
         isRunning = false
-        saveTimerState?.invoke(currentTimeSeconds)
+        saveTimerState?.invoke(currentTimeSeconds, measureDate)
         subscriber?.dispose()
         cancelAlarmManager?.invoke()
         releaseWakeLockCallback?.invoke()
     }
 
-    fun changeRunningState(onStopCallback: () -> Unit) {
+    fun changeRunningState(onStopCallback: () -> Unit, measureDate: Long) {
         if (isRunning) {
             Log.v("Timer", "changeRunningState stopping")
             stopTimer()
             onStopCallback.invoke()
         } else {
             Log.v("Timer", "changeRunningState starting")
-            startTimer()
+            startTimer(measureDate)
         }
     }
 
-    fun setCurrentTimeAndUpdate(timeSeconds: Long) {
+    fun setCurrentTimeAndUpdate(timeSeconds: Long, measureDate: Long) {
         Log.v("Timer", "setCurrentTimeAndUpdate, seconds state $currentTimeSeconds")
         Log.v("Timer", "setCurrentTimeAndUpdate, passed seconds state $timeSeconds")
+        this.measureDate = measureDate
         currentTimeSeconds = timeSeconds
         update()
     }

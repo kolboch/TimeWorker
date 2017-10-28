@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity(), MainView {
         var handled = false
         when (item?.itemId) {
             R.id.statistics -> {
+                presenter.onStatisticsActivityClicked()
                 startActivity(Intent(this, StatisticsActivity::class.java))
                 handled = true
             }
@@ -42,8 +43,8 @@ class MainActivity : AppCompatActivity(), MainView {
     }
 
     override fun onDestroy() {
-        presenter.onActivityDestroyed()
         presenter.onServiceRequested()
+        presenter.onActivityDestroyed()
         super.onDestroy()
     }
 

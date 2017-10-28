@@ -6,7 +6,7 @@ import android.preference.PreferenceManager
 import com.kakaboc.alarm.worktimer.R
 import com.kakaboc.alarm.worktimer.database.MySqlHelper
 import com.kakaboc.alarm.worktimer.model.TimeFormatter
-import com.kakaboc.alarm.worktimer.model.Timer
+import com.kakaboc.alarm.worktimer.model.MyTimer
 import com.kakaboc.alarm.worktimer.services.TIMER_IS_WORKING
 import com.kakaboc.alarm.worktimer.services.WorkTimeService
 
@@ -26,8 +26,8 @@ class MainPresenter(private val view: MainView, val context: Context) {
     }
 
     fun onActivityToTimerBind() {
-        Timer.callbackUI = { it -> updateActivityTimer(it) }
-        Timer.animateCallbackUI = { animateView(it) }
+        MyTimer.callbackUI = { it -> updateActivityTimer(it) }
+        MyTimer.animateCallbackUI = { animateView(it) }
         refreshTimerState()
     }
 
@@ -40,7 +40,7 @@ class MainPresenter(private val view: MainView, val context: Context) {
     }
 
     fun startStopTimer() {
-        Timer.changeRunningState({updateWorkingTime()})
+        MyTimer.changeRunningState({ updateWorkingTime() }, dbHelper.getTodayTimeMillis())
     }
 
     private fun refreshTimerState() {
@@ -55,7 +55,7 @@ class MainPresenter(private val view: MainView, val context: Context) {
 
     fun onActivityDestroyed() {
         updateWorkingTime()
-        preferences.edit().putBoolean(TIMER_IS_WORKING, Timer.isRunning).apply()
+        preferences.edit().putBoolean(TIMER_IS_WORKING, MyTimer.isRunning).apply()
     }
 
     fun onServiceRequested() {
@@ -64,6 +64,10 @@ class MainPresenter(private val view: MainView, val context: Context) {
     }
 
     private fun updateWorkingTime() {
-        dbHelper.updateTodayWorkingTime(Timer.currentTimeSeconds)
+        dbHelper.updateTodayWorkingTime(MyTimer.currentTimeSeconds)
+    }
+
+    fun onStatisticsActivityClicked() {
+        updateWorkingTime()
     }
 }

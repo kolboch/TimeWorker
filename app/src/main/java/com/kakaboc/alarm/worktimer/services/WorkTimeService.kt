@@ -8,14 +8,16 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
 import android.os.PowerManager
 import android.preference.PreferenceManager
 import android.util.Log
+import com.example.kb.worktimer.services.MyNotification
 import com.kakaboc.alarm.worktimer.database.MySqlHelper
 import com.kakaboc.alarm.worktimer.main.MainActivity
 import com.kakaboc.alarm.worktimer.model.TimeFormatter
-import com.kakaboc.alarm.worktimer.model.Timer
+import com.kakaboc.alarm.worktimer.model.MyTimer
 import java.util.*
 
 
@@ -56,13 +58,13 @@ class WorkTimeService : Service() {
         PendingIntent.getService(applicationContext, PENDING_INTENT_SAVE_MIDNIGHT, Intent(ACTION_SAVE), 0)
     }
 
-    private lateinit var databaseHelper: MySqlHelper
+    private lateinit var dbHelper: MySqlHelper
     private lateinit var notificationManager: NotificationManager
 
     override fun onCreate() {
         super.onCreate()
         preferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
-        databaseHelper = MySqlHelper.getInstance(applicationContext)
+        dbHelper = MySqlHelper.getInstance(applicationContext)
         refreshTimerState()
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         setUpNotification()
@@ -75,7 +77,7 @@ class WorkTimeService : Service() {
     }
 
     private fun setUpTimerSaveCallback() {
-        Timer.saveTimerState = { saveTimerState(it) }
+        MyTimer.saveTimerState = { time, date -> saveTimerState(time, date) }
     }
 
     override fun onBind(p0: Intent?): IBinder? = null
@@ -87,7 +89,7 @@ class WorkTimeService : Service() {
 
 
     override fun onDestroy() {
-        saveTimerState(Timer.currentTimeSeconds)
+        saveTimerState(MyTimer.currentTimeSeconds, MyTimer.measureDate)
         stopForeground(true)
         cancelMidnightAction()
         if (wakeLock != null && wakeLock!!.isHeld) {
@@ -100,33 +102,33 @@ class WorkTimeService : Service() {
         setUpWorkingTime()
         val wasWorking = preferences.getBoolean(TIMER_IS_WORKING, false)
         if (wasWorking) {
-            Timer.startTimer()
+            MyTimer.startTimer(dbHelper.getTodayTimeMillis())
         }
     }
 
     private fun setUpWorkingTime() {
         Log.v(LOG_TAG, "setUpWorkingTimeCalled")
-        val dbWorkingTime = databaseHelper.getTodayWorkingTime()
-        Log.v(LOG_TAG, "setUpWorkingTime timer seconds: ${Timer.currentTimeSeconds}")
+        val dbWorkingTime = dbHelper.getTodayWorkingTime()
+        Log.v(LOG_TAG, "setUpWorkingTime timer seconds: ${MyTimer.currentTimeSeconds}")
         Log.v(LOG_TAG, "setUpWorkingTime db seconds: $dbWorkingTime")
-        if (dbWorkingTime >= Timer.currentTimeSeconds) {
+        if (dbWorkingTime >= MyTimer.currentTimeSeconds) {
             Log.v(LOG_TAG, "setupWorkingTime -> setCurrentTimeAndUpdate($dbWorkingTime)")
-            Timer.setCurrentTimeAndUpdate(dbWorkingTime)
+            MyTimer.setCurrentTimeAndUpdate(dbWorkingTime, dbHelper.getTodayTimeMillis())
         } else {
-            databaseHelper.updateTodayWorkingTime(Timer.currentTimeSeconds)
+            dbHelper.updateTodayWorkingTime(MyTimer.currentTimeSeconds)
         }
     }
 
     private fun setUpTimerNotificationCallback() {
-        Timer.callbackNotification = { it ->
+        MyTimer.callbackNotification = { it ->
             val time = TimeFormatter.getTimeFromSeconds(it)
             updateNotification(time)
         }
     }
 
-    private fun saveTimerState(timeInSeconds: Long) {
-        databaseHelper.updateTodayWorkingTime(timeInSeconds)
-        preferences.edit().putBoolean(TIMER_IS_WORKING, Timer.isRunning).apply()
+    private fun saveTimerState(timeInSeconds: Long, measureDate: Long) {
+        dbHelper.updateWorkingTime(timeInSeconds, measureDate)
+        preferences.edit().putBoolean(TIMER_IS_WORKING, MyTimer.isRunning).apply()
     }
 
     private fun updateNotification(contentText: String) {
@@ -150,19 +152,23 @@ class WorkTimeService : Service() {
         when (action) {
             ACTION_START -> {
                 setUpWorkingTime()
-                Timer.startTimer()
+                MyTimer.startTimer(dbHelper.getTodayTimeMillis())
                 setUpAlarmManagerTimerCallbacks()
             }
             ACTION_STOP -> {
-                Timer.stopTimer()
+                MyTimer.stopTimer()
                 startMainActivity()
                 cancelMidnightAction()
                 stopSelf()
             }
             ACTION_SAVE -> {
                 Log.v(LOG_TAG, "Action save got called")
-                saveTimerState(Timer.currentTimeSeconds)
-                Timer.setCurrentTimeAndUpdate(0)
+                saveTimerState(MyTimer.currentTimeSeconds, MyTimer.measureDate)
+                Handler().postDelayed(
+                        { MyTimer.setCurrentTimeAndUpdate(0, dbHelper.getTodayTimeMillis())},
+                        5000
+                )
+
             }
             else -> {
                 refreshTimerState()
@@ -189,13 +195,13 @@ class WorkTimeService : Service() {
     }
 
     private fun setUpTimerWakeLockCallbacks() {
-        Timer.acquireWakeLockCallback = { acquireWakeLock() }
-        Timer.releaseWakeLockCallback = { releaseWakeLock() }
+        MyTimer.acquireWakeLockCallback = { acquireWakeLock() }
+        MyTimer.releaseWakeLockCallback = { releaseWakeLock() }
     }
 
     private fun setUpAlarmManagerTimerCallbacks() {
-        Timer.scheduleAlarmManager = { scheduleMidnightAction() }
-        Timer.cancelAlarmManager = { cancelMidnightAction() }
+        MyTimer.scheduleAlarmManager = { scheduleMidnightAction() }
+        MyTimer.cancelAlarmManager = { cancelMidnightAction() }
     }
 
     private fun scheduleMidnightAction() {
@@ -206,7 +212,7 @@ class WorkTimeService : Service() {
         }
         midnightCalendar.set(Calendar.HOUR_OF_DAY, 23)
         midnightCalendar.set(Calendar.MINUTE, 59)
-        midnightCalendar.set(Calendar.SECOND, 40)
+        midnightCalendar.set(Calendar.SECOND, 59)
         midnightCalendar.set(Calendar.MILLISECOND, 0)
         val alarmManager = getSystemService(android.content.Context.ALARM_SERVICE) as AlarmManager
         alarmManager.setExact(

@@ -1,10 +1,11 @@
-package com.kakaboc.alarm.worktimer.services
+package com.example.kb.worktimer.services
 
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.os.Build
 import android.support.v4.app.NotificationCompat
+import android.support.v4.app.NotificationCompat.PRIORITY_MAX
 import com.kakaboc.alarm.worktimer.R
 
 /**
@@ -36,6 +37,7 @@ class MyNotification {
                     .addAction(R.drawable.ic_tag_faces_white_24dp, context.getString(R.string.start), intentStart)
                     .addAction(R.drawable.ic_pause_white_24dp, context.getString(R.string.stop), intentStop)
                     .setContentIntent(contentIntent)
+                    .setPriority(PRIORITY_MAX)
                     .build()
         }
 
