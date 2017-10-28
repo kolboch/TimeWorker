@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.example.kb.worktimer">
+          package="com.kakaboc.alarm.worktimer">
 
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <application
@@ -22,9 +22,9 @@
 
         <service android:name=".services.WorkTimeService">
             <intent-filter>
-                <action android:name="com.example.kb.worktimer.action_start"/>
-                <action android:name="com.example.kb.worktimer.action_stop"/>
-                <action android:name="com.example.kb.worktimer.action_save"/>
+                <action android:name="com.kakaboc.alarm.worktimer.action_start"/>
+                <action android:name="com.kakaboc.alarm.worktimer.action_stop"/>
+                <action android:name="com.kakaboc.alarm.worktimer.action_save"/>
             </intent-filter>
         </service>
 
