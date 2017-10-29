@@ -3,6 +3,7 @@ package com.kakaboc.alarm.worktimer.services
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
@@ -17,6 +18,10 @@ import com.kakaboc.alarm.worktimer.main.MainActivity
 import com.kakaboc.alarm.worktimer.model.MyTimer
 import com.kakaboc.alarm.worktimer.model.TimeFormatter
 import java.util.concurrent.TimeUnit
+import android.view.Display
+import android.content.Context.DISPLAY_SERVICE
+import android.hardware.display.DisplayManager
+import android.os.Build
 
 
 /**
@@ -28,7 +33,6 @@ const val PENDING_INTENT_START = 111
 const val ACTION_STOP = "com.kakaboc.alarm.worktimer.action_stop"
 const val PENDING_INTENT_STOP = 788
 const val NOTIFICATION_ID = 14
-const val PENDING_INTENT_SAVE_MIDNIGHT = 901
 const val ACTION_SAVE = "com.kakaboc.alarm.worktimer.action_save"
 const val SCREEN_OFF_TIME = "com.kakaboc.alarm.worktimer.screen_off_time_preferences"
 
@@ -53,10 +57,6 @@ class WorkTimeService : Service() {
         PendingIntent.getActivity(this, 0, intent, 0)
     }
 
-    private val saveTimeIntent by lazy {
-        PendingIntent.getService(applicationContext, PENDING_INTENT_SAVE_MIDNIGHT, Intent(ACTION_SAVE), 0)
-    }
-
     private lateinit var dbHelper: MySqlHelper
     private lateinit var notificationManager: NotificationManager
 
@@ -70,6 +70,23 @@ class WorkTimeService : Service() {
         setUpTimerNotificationCallback()
         setUpTimerSaveCallback()
         setUpScreenStateReceiver()
+        onScreenStateUnknown()
+    }
+
+    private fun onScreenStateUnknown() {
+        if (!isScreenOn()) {
+            onScreenOff()
+        }
+    }
+
+    private fun isScreenOn(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+            val dm = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+            dm.displays.any { it.state != Display.STATE_OFF }
+        } else {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+            powerManager.isScreenOn
+        }
     }
 
     override fun onBind(p0: Intent?): IBinder? = null
@@ -144,21 +161,14 @@ class WorkTimeService : Service() {
         when (action) {
             ACTION_START -> {
                 onTimerStartedActions()
+                onScreenStateUnknown()
             }
             ACTION_STOP -> {
                 onTimerStoppedActions()
             }
-            ACTION_SAVE -> {
-                Log.v(LOG_TAG, "Action save got called")
-                saveTimerState(MyTimer.currentTimeSeconds, MyTimer.measureDate)
-                Handler().postDelayed(
-                        { MyTimer.setCurrentTimeAndUpdate(0, dbHelper.getTodayTimeMillis()) },
-                        5000
-                )
-
-            }
             else -> {
                 refreshTimerState()
+                onScreenStateUnknown()
             }
         }
     }
