@@ -114,4 +114,9 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
         calendar.set(Calendar.MILLISECOND, 0)
         return calendar.timeInMillis
     }
+
+    fun getCurrentTimeMillis(): Long {
+        val calendar = Calendar.getInstance(userLocale)
+        return calendar.timeInMillis
+    }
 }

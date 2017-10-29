@@ -29,10 +29,6 @@ object MyTimer {
         }
 
     var animateCallbackUI: ((Boolean) -> Unit)? = null
-    var acquireWakeLockCallback: (() -> Unit)? = null
-    var releaseWakeLockCallback: (() -> Unit)? = null
-    var scheduleAlarmManager: (() -> Unit)? = null
-    var cancelAlarmManager: (() -> Unit)? = null
     var saveTimerState: ((Long, Long) -> Unit)? = null
 
     private var observableInterval = Observable.interval(1, TimeUnit.SECONDS)
@@ -60,8 +56,19 @@ object MyTimer {
         }
         animateCallbackUI?.invoke(isRunning)
         isRunning = true
-        scheduleAlarmManager?.invoke()
-        acquireWakeLockCallback?.invoke()
+    }
+
+    fun resumeTimer(timePassedSeconds: Long) {
+        if (isRunning && subscriber?.isDisposed == false) {
+            return
+        }
+        currentTimeSeconds += timePassedSeconds
+        subscriber = observableInterval.subscribe {
+            currentTimeSeconds += 1
+            update()
+        }
+        animateCallbackUI?.invoke(isRunning)
+        isRunning = true
     }
 
     fun stopTimer() {
@@ -72,8 +79,6 @@ object MyTimer {
         isRunning = false
         saveTimerState?.invoke(currentTimeSeconds, measureDate)
         subscriber?.dispose()
-        cancelAlarmManager?.invoke()
-        releaseWakeLockCallback?.invoke()
     }
 
     fun changeRunningState(onStopCallback: () -> Unit, measureDate: Long) {
