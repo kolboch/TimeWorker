@@ -9,6 +9,7 @@ import com.kakaboc.alarm.worktimer.R
 import com.kakaboc.alarm.worktimer.database.MySqlHelper
 import com.kakaboc.alarm.worktimer.model.TimeFormatter
 import com.kakaboc.alarm.worktimer.model.MyTimer
+import com.kakaboc.alarm.worktimer.services.ACTIVITY_DESTROYED_TIME
 import com.kakaboc.alarm.worktimer.services.TIMER_IS_WORKING
 import com.kakaboc.alarm.worktimer.services.WorkTimeService
 
@@ -42,7 +43,7 @@ class MainPresenter(private val view: MainView, private val context: Context) {
     }
 
     fun startStopTimer() {
-        MyTimer.changeRunningState({ updateWorkingTime() }, dbHelper.getTodayTimeMillis())
+        MyTimer.changeRunningState(dbHelper.getTodayTimeMillis())
     }
 
     private fun refreshTimerState() {
@@ -57,23 +58,24 @@ class MainPresenter(private val view: MainView, private val context: Context) {
 
     fun onActivityDestroyed() {
         updateWorkingTime()
-        preferences.edit().putBoolean(TIMER_IS_WORKING, MyTimer.isRunning).apply()
+        val isRunning = MyTimer.isRunning
+        preferences.edit().putBoolean(TIMER_IS_WORKING, isRunning).apply()
+        if (isRunning) {
+            Log.v(LOG_TAG, "Saving activity destroyed time")
+            preferences.edit().putLong(ACTIVITY_DESTROYED_TIME, System.currentTimeMillis()).apply()
+        }
     }
 
     fun onServiceRequested() {
         Log.v(LOG_TAG, "onServiceRequested")
-        Handler().postDelayed(
-                {
-                    workTimeServiceIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    context.startService(workTimeServiceIntent)
-                    Log.v(LOG_TAG, "delayed method call")
-                },
-                2500
-        )
+        workTimeServiceIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startService(workTimeServiceIntent)
     }
 
     private fun updateWorkingTime() {
-        dbHelper.updateTodayWorkingTime(MyTimer.currentTimeSeconds)
+        if (MyTimer.measureDate != -1L) {
+            dbHelper.updateWorkingTime(MyTimer.currentTimeSeconds, MyTimer.measureDate)
+        }
     }
 
     fun onStatisticsActivityClicked() {

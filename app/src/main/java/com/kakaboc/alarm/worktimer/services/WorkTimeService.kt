@@ -33,8 +33,8 @@ const val PENDING_INTENT_START = 111
 const val ACTION_STOP = "com.kakaboc.alarm.worktimer.action_stop"
 const val PENDING_INTENT_STOP = 788
 const val NOTIFICATION_ID = 14
-const val ACTION_SAVE = "com.kakaboc.alarm.worktimer.action_save"
 const val SCREEN_OFF_TIME = "com.kakaboc.alarm.worktimer.screen_off_time_preferences"
+const val ACTIVITY_DESTROYED_TIME = "com.kakaboc.alarm.worktimer.activity_destroyed_time"
 
 class WorkTimeService : Service() {
 
@@ -62,6 +62,7 @@ class WorkTimeService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.v(LOG_TAG, "onCreate called")
         preferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
         dbHelper = MySqlHelper.getInstance(applicationContext)
         refreshTimerState()
@@ -98,6 +99,7 @@ class WorkTimeService : Service() {
 
 
     override fun onDestroy() {
+        Log.v(LOG_TAG, "onDestroy called")
         saveTimerState(MyTimer.currentTimeSeconds, MyTimer.measureDate)
         stopForeground(true)
         if (wakeLock != null && wakeLock!!.isHeld) {
@@ -108,10 +110,19 @@ class WorkTimeService : Service() {
     }
 
     private fun refreshTimerState() {
+        Log.v(LOG_TAG, "refreshTimerState called")
         setUpWorkingTime()
         val wasWorking = preferences.getBoolean(TIMER_IS_WORKING, false)
         if (wasWorking) {
             MyTimer.startTimer(dbHelper.getTodayTimeMillis())
+            val destroyTime = preferences.getLong(ACTIVITY_DESTROYED_TIME, -1L)
+            if (destroyTime != -1L) {
+                val secondsPassed = TimeUnit.MILLISECONDS
+                        .toSeconds(System.currentTimeMillis() - destroyTime)
+                MyTimer.addPassedSeconds(secondsPassed)
+                Log.v(LOG_TAG, "Destroy time retrieved $secondsPassed")
+                preferences.edit().putLong(ACTIVITY_DESTROYED_TIME, -1L).apply()
+            }
         }
     }
 
@@ -123,8 +134,6 @@ class WorkTimeService : Service() {
         if (dbWorkingTime >= MyTimer.currentTimeSeconds) {
             Log.v(LOG_TAG, "setupWorkingTime -> setCurrentTimeAndUpdate($dbWorkingTime)")
             MyTimer.setCurrentTimeAndUpdate(dbWorkingTime, dbHelper.getTodayTimeMillis())
-        } else {
-            dbHelper.updateTodayWorkingTime(MyTimer.currentTimeSeconds)
         }
     }
 
@@ -136,7 +145,10 @@ class WorkTimeService : Service() {
     }
 
     private fun saveTimerState(timeInSeconds: Long, measureDate: Long) {
-        dbHelper.updateWorkingTime(timeInSeconds, measureDate)
+        Log.v(LOG_TAG, "saveTimerState called")
+        if (measureDate != -1L) {
+            dbHelper.updateWorkingTime(timeInSeconds, measureDate)
+        }
         preferences.edit().putBoolean(TIMER_IS_WORKING, MyTimer.isRunning).apply()
     }
 

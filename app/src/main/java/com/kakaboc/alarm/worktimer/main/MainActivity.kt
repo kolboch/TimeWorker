@@ -43,7 +43,6 @@ class MainActivity : AppCompatActivity(), MainView {
     }
 
     override fun onDestroy() {
-        presenter.onServiceRequested()
         presenter.onActivityDestroyed()
         super.onDestroy()
     }

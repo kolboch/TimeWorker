@@ -44,7 +44,7 @@ object MyTimer {
     fun startTimer(measureDate: Long) {
         Log.v("Timer", "Starting timer, isRunning: $isRunning")
         if (this.measureDate != -1L && this.measureDate != measureDate) {
-            saveTimerState?.invoke(currentTimeSeconds, measureDate)
+            saveTimerState?.invoke(currentTimeSeconds, this.measureDate)
             setCurrentTimeAndUpdate(0, measureDate)
         }
         if (isRunning && subscriber?.isDisposed == false) {
@@ -81,11 +81,10 @@ object MyTimer {
         subscriber?.dispose()
     }
 
-    fun changeRunningState(onStopCallback: () -> Unit, measureDate: Long) {
+    fun changeRunningState(measureDate: Long) {
         if (isRunning) {
             Log.v("Timer", "changeRunningState stopping")
             stopTimer()
-            onStopCallback.invoke()
         } else {
             Log.v("Timer", "changeRunningState starting")
             startTimer(measureDate)
@@ -98,6 +97,10 @@ object MyTimer {
         this.measureDate = measureDate
         currentTimeSeconds = timeSeconds
         update()
+    }
+
+    fun addPassedSeconds(seconds: Long) {
+        currentTimeSeconds += seconds
     }
 
     private fun update() {

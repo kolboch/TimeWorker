@@ -61,21 +61,10 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
         }
     }
 
-    fun updateTodayWorkingTime(workingTime: Long) {
-        val todayDaysMillis = getTodayTimeMillis()
-        Log.v(LOG_TAG, "Updating today $todayDaysMillis")
-        Log.v(LOG_TAG, "Updating working time $workingTime")
-        context.database.use {
-            replace(TIMES_TABLE_NAME,
-                    TIMES_TABLE_DATE to todayDaysMillis,
-                    TIMES_TABLE_TIME to workingTime)
-        }
-    }
-
     fun getTodayWorkingTime(): Long {
         val todayDaysMillis = getTodayTimeMillis()
         var result = getTodayWorkTime(todayDaysMillis)
-
+        Log.v(LOG_TAG, "todayDaysMillis: $todayDaysMillis, workTime: $result")
         if (result == null) {
             setupTodayWorkingTime(todayDaysMillis)
             result = WorkTime(todayDaysMillis, 0)
