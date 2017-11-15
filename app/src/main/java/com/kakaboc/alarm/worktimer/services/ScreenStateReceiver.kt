@@ -14,8 +14,8 @@ class ScreenStateReceiver(
 
     override fun onReceive(context: Context?, intent: Intent?) {
         when (intent?.action) {
-            Intent.ACTION_SCREEN_OFF -> screenOffCallback?.invoke()
-            Intent.ACTION_SCREEN_ON -> screenOnCallback?.invoke()
+            Intent.ACTION_SCREEN_OFF -> screenOffCallback.invoke()
+            Intent.ACTION_SCREEN_ON -> screenOnCallback.invoke()
         }
     }
 }

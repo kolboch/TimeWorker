@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">WorkTimer</string>
     <string name="current_working_time">Obecny czas pracy</string>
     <string name="menu_stats_title">Statystyki</string>
     <string name="working_data_label">Czas pracy</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
 </resources>

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Arbeit zeitmesser</string>
     <string name="stop">Stopp</string>
     <string name="menu_stats_title">Statistiken</string>
     <string name="working_data_label">Arbeitszeit</string>
     <string name="current_working_time">Aktuell arbeitszeit</string>
+    <string name="start">Start</string>
 </resources>
