@@ -7,21 +7,19 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
-import android.os.Handler
+import android.hardware.display.DisplayManager
+import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.preference.PreferenceManager
 import android.util.Log
+import android.view.Display
 import com.example.kb.worktimer.services.MyNotification
 import com.kakaboc.alarm.worktimer.database.MySqlHelper
 import com.kakaboc.alarm.worktimer.main.MainActivity
 import com.kakaboc.alarm.worktimer.model.MyTimer
 import com.kakaboc.alarm.worktimer.model.TimeFormatter
 import java.util.concurrent.TimeUnit
-import android.view.Display
-import android.content.Context.DISPLAY_SERVICE
-import android.hardware.display.DisplayManager
-import android.os.Build
 
 
 /**
@@ -39,7 +37,6 @@ const val ACTIVITY_DESTROYED_TIME = "com.kakaboc.alarm.worktimer.activity_destro
 class WorkTimeService : Service() {
 
     private val LOG_TAG = "WorkTimeService"
-    private var wakeLock: PowerManager.WakeLock? = null
     private lateinit var preferences: SharedPreferences
     private lateinit var screenStateReceiver: ScreenStateReceiver
 
@@ -65,12 +62,12 @@ class WorkTimeService : Service() {
         Log.v(LOG_TAG, "onCreate called")
         preferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
         dbHelper = MySqlHelper.getInstance(applicationContext)
-        refreshTimerState()
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         setUpNotification()
         setUpTimerNotificationCallback()
         setUpTimerSaveCallback()
         setUpScreenStateReceiver()
+        refreshTimerState()
         onScreenStateUnknown()
     }
 
@@ -101,10 +98,14 @@ class WorkTimeService : Service() {
     override fun onDestroy() {
         Log.v(LOG_TAG, "onDestroy called")
         saveTimerState(MyTimer.currentTimeSeconds, MyTimer.measureDate)
-        stopForeground(true)
-        if (wakeLock != null && wakeLock!!.isHeld) {
-            wakeLock?.release()
+        if (MyTimer.isRunning) {
+            MyTimer.stopTimer()
+            preferences.edit()
+                    .putBoolean(TIMER_IS_WORKING, true)
+                    .putLong(SCREEN_OFF_TIME, dbHelper.getCurrentTimeMillis())
+                    .apply()
         }
+        stopForeground(true)
         unregisterReceiver(screenStateReceiver)
         super.onDestroy()
     }
@@ -114,15 +115,23 @@ class WorkTimeService : Service() {
         setUpWorkingTime()
         val wasWorking = preferences.getBoolean(TIMER_IS_WORKING, false)
         if (wasWorking) {
-            MyTimer.startTimer(dbHelper.getTodayTimeMillis())
             val destroyTime = preferences.getLong(ACTIVITY_DESTROYED_TIME, -1L)
             if (destroyTime != -1L) {
                 val secondsPassed = TimeUnit.MILLISECONDS
                         .toSeconds(System.currentTimeMillis() - destroyTime)
                 MyTimer.addPassedSeconds(secondsPassed)
-                Log.v(LOG_TAG, "Destroy time retrieved $secondsPassed")
+                dbHelper.updateWorkingTime(MyTimer.currentTimeSeconds, MyTimer.measureDate)
+                Log.v(LOG_TAG, "Destroy time retrieved $secondsPassed, added and saved")
                 preferences.edit().putLong(ACTIVITY_DESTROYED_TIME, -1L).apply()
             }
+            // screen was off handling
+            val offTimeMillis = preferences.getLong(SCREEN_OFF_TIME, dbHelper.getCurrentTimeMillis())
+            if (offTimeMillis != -1L) {
+                val timePassed = dbHelper.getCurrentTimeMillis() - offTimeMillis
+                MyTimer.addPassedSeconds(TimeUnit.MILLISECONDS.toSeconds(timePassed))
+                preferences.edit().putLong(SCREEN_OFF_TIME, -1L).apply()
+            }
+            MyTimer.startTimer(dbHelper.getTodayTimeMillis())
         }
     }
 
@@ -210,6 +219,7 @@ class WorkTimeService : Service() {
             val offTimeMillis = preferences.getLong(SCREEN_OFF_TIME, dbHelper.getCurrentTimeMillis())
             val timePassed = dbHelper.getCurrentTimeMillis() - offTimeMillis
             MyTimer.resumeTimer(TimeUnit.MILLISECONDS.toSeconds(timePassed))
+            preferences.edit().putLong(SCREEN_OFF_TIME, -1L).apply()
         }
     }
 
@@ -226,7 +236,7 @@ class WorkTimeService : Service() {
     }
 
     private fun onTimerStartedActions() {
-        setUpWorkingTime()
+        refreshTimerState()
         MyTimer.startTimer(dbHelper.getTodayTimeMillis())
     }
 
