@@ -12,7 +12,14 @@ import java.util.concurrent.TimeUnit
 object MyTimer {
 
     var isRunning = false
-        private set
+        private set(value) {
+            field = value
+            saveIsRunning?.invoke(value)
+        }
+        get() {
+            return getIsRunning?.invoke() ?: false
+        }
+    //TODO try moving that logic also to shared preferences
     var currentTimeSeconds = 0L
         private set
     var measureDate: Long = -1L
@@ -30,6 +37,8 @@ object MyTimer {
 
     var animateCallbackUI: ((Boolean) -> Unit)? = null
     var saveTimerState: ((Long, Long) -> Unit)? = null
+    var saveIsRunning: ((Boolean) -> Unit)? = null
+    var getIsRunning: (() -> Boolean)? = null
 
     private var observableInterval = Observable.interval(1, TimeUnit.SECONDS)
     private var subscriber: Disposable? = null

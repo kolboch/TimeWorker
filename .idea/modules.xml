@@ -3,8 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/AppTimer.iml" filepath="$PROJECT_DIR$/AppTimer.iml" />
-      <module fileurl="file://E:\AndroidKotlin\TimeWorker\AppTimer.iml" filepath="E:\AndroidKotlin\TimeWorker\AppTimer.iml" />
-      <module fileurl="file://D:\AppTimer\TimeWorker.iml" filepath="D:\AppTimer\TimeWorker.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

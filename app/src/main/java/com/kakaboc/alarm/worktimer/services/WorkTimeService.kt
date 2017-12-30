@@ -65,7 +65,7 @@ class WorkTimeService : Service() {
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         setUpNotification()
         setUpTimerNotificationCallback()
-        setUpTimerSaveCallback()
+        setUpTimerCallbacks()
         setUpScreenStateReceiver()
         refreshTimerState()
         onScreenStateUnknown()
@@ -94,6 +94,10 @@ class WorkTimeService : Service() {
         return START_STICKY
     }
 
+    override fun onLowMemory() {
+        Log.v(LOG_TAG, "onLowMemory CALL")
+        super.onLowMemory()
+    }
 
     override fun onDestroy() {
         Log.v(LOG_TAG, "onDestroy called")
@@ -231,8 +235,29 @@ class WorkTimeService : Service() {
         registerReceiver(screenStateReceiver, filter)
     }
 
+    private fun setUpTimerCallbacks() {
+        setUpTimerSaveCallback()
+        setUpTimerRunningStateCallbacks()
+    }
+
     private fun setUpTimerSaveCallback() {
         MyTimer.saveTimerState = { time, date -> saveTimerState(time, date) }
+    }
+
+    private fun setUpTimerRunningStateCallbacks() {
+        MyTimer.saveIsRunning = { isWorking -> saveIsRunningToSharedPrefs(isWorking) }
+        MyTimer.getIsRunning = { getIsRunningFromSharedPrefs() }
+    }
+
+    private fun getIsRunningFromSharedPrefs(): Boolean {
+        return preferences.getBoolean(TIMER_IS_WORKING, false)
+    }
+
+    private fun saveIsRunningToSharedPrefs(isWorking: Boolean) {
+        preferences.edit()
+                .putBoolean(TIMER_IS_WORKING, isWorking)
+                .apply()
+        Log.v(LOG_TAG, "Saving isWorking value: $isWorking")
     }
 
     private fun onTimerStartedActions() {
