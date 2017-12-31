@@ -42,11 +42,6 @@ class MainActivity : AppCompatActivity(), MainView {
         return handled
     }
 
-    override fun onDestroy() {
-        presenter.onActivityDestroyed()
-        super.onDestroy()
-    }
-
     override fun onTimerUpdate(time: String) {
         runOnUiThread {
             timerDisplay.text = time

@@ -2,14 +2,12 @@ package com.kakaboc.alarm.worktimer.main
 
 import android.content.Context
 import android.content.Intent
-import android.os.Handler
 import android.preference.PreferenceManager
 import android.util.Log
 import com.kakaboc.alarm.worktimer.R
 import com.kakaboc.alarm.worktimer.database.MySqlHelper
 import com.kakaboc.alarm.worktimer.model.TimeFormatter
 import com.kakaboc.alarm.worktimer.model.MyTimer
-import com.kakaboc.alarm.worktimer.services.ACTIVITY_DESTROYED_TIME
 import com.kakaboc.alarm.worktimer.services.TIMER_IS_WORKING
 import com.kakaboc.alarm.worktimer.services.WorkTimeService
 
@@ -29,7 +27,7 @@ class MainPresenter(private val view: MainView, private val context: Context) {
     }
 
     fun onActivityToTimerBind() {
-        MyTimer.callbackUI = { it -> updateActivityTimer(it) }
+        MyTimer.updateActivityUI = { it -> updateActivityTimer(it) }
         MyTimer.animateCallbackUI = { animateView(it) }
         refreshTimerState()
     }
@@ -43,7 +41,7 @@ class MainPresenter(private val view: MainView, private val context: Context) {
     }
 
     fun startStopTimer() {
-        MyTimer.changeRunningState(dbHelper.getTodayTimeMillis())
+        MyTimer.changeRunningState(dbHelper.getDayTimeInMillis())
     }
 
     private fun refreshTimerState() {
@@ -53,16 +51,6 @@ class MainPresenter(private val view: MainView, private val context: Context) {
             view.onTimerButtonUpdate(R.string.stop)
         } else {
             view.onTimerButtonUpdate(R.string.start)
-        }
-    }
-
-    fun onActivityDestroyed() {
-        updateWorkingTime()
-        val isRunning = MyTimer.isRunning
-        preferences.edit().putBoolean(TIMER_IS_WORKING, isRunning).apply()
-        if (isRunning) {
-            Log.v(LOG_TAG, "Saving activity destroyed time")
-            preferences.edit().putLong(ACTIVITY_DESTROYED_TIME, System.currentTimeMillis()).apply()
         }
     }
 

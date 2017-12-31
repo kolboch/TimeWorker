@@ -42,10 +42,10 @@ class MyNotification {
         }
 
         private fun initBuilder(context: Context) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                builder = NotificationCompat.Builder(context, CHANNEL_ID)
+            builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationCompat.Builder(context, CHANNEL_ID)
             } else { // Android API below version O
-                builder = NotificationCompat.Builder(context)
+                NotificationCompat.Builder(context)
             }
         }
 

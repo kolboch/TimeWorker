@@ -19,7 +19,6 @@ import com.kakaboc.alarm.worktimer.database.MySqlHelper
 import com.kakaboc.alarm.worktimer.main.MainActivity
 import com.kakaboc.alarm.worktimer.model.MyTimer
 import com.kakaboc.alarm.worktimer.model.TimeFormatter
-import java.util.concurrent.TimeUnit
 
 
 /**
@@ -31,8 +30,6 @@ const val PENDING_INTENT_START = 111
 const val ACTION_STOP = "com.kakaboc.alarm.worktimer.action_stop"
 const val PENDING_INTENT_STOP = 788
 const val NOTIFICATION_ID = 14
-const val SCREEN_OFF_TIME = "com.kakaboc.alarm.worktimer.screen_off_time_preferences"
-const val ACTIVITY_DESTROYED_TIME = "com.kakaboc.alarm.worktimer.activity_destroyed_time"
 
 class WorkTimeService : Service() {
 
@@ -67,7 +64,6 @@ class WorkTimeService : Service() {
         setUpTimerNotificationCallback()
         setUpTimerCallbacks()
         setUpScreenStateReceiver()
-        refreshTimerState()
         onScreenStateUnknown()
     }
 
@@ -102,56 +98,13 @@ class WorkTimeService : Service() {
     override fun onDestroy() {
         Log.v(LOG_TAG, "onDestroy called")
         saveTimerState(MyTimer.currentTimeSeconds, MyTimer.measureDate)
-        if (MyTimer.isRunning) {
-            MyTimer.stopTimer()
-            preferences.edit()
-                    .putBoolean(TIMER_IS_WORKING, true)
-                    .putLong(SCREEN_OFF_TIME, dbHelper.getCurrentTimeMillis())
-                    .apply()
-        }
         stopForeground(true)
         unregisterReceiver(screenStateReceiver)
         super.onDestroy()
     }
 
-    private fun refreshTimerState() {
-        Log.v(LOG_TAG, "refreshTimerState called")
-        setUpWorkingTime()
-        val wasWorking = preferences.getBoolean(TIMER_IS_WORKING, false)
-        if (wasWorking) {
-            val destroyTime = preferences.getLong(ACTIVITY_DESTROYED_TIME, -1L)
-            if (destroyTime != -1L) {
-                val secondsPassed = TimeUnit.MILLISECONDS
-                        .toSeconds(System.currentTimeMillis() - destroyTime)
-                MyTimer.addPassedSeconds(secondsPassed)
-                dbHelper.updateWorkingTime(MyTimer.currentTimeSeconds, MyTimer.measureDate)
-                Log.v(LOG_TAG, "Destroy time retrieved $secondsPassed, added and saved")
-                preferences.edit().putLong(ACTIVITY_DESTROYED_TIME, -1L).apply()
-            }
-            // screen was off handling
-            val offTimeMillis = preferences.getLong(SCREEN_OFF_TIME, dbHelper.getCurrentTimeMillis())
-            if (offTimeMillis != -1L) {
-                val timePassed = dbHelper.getCurrentTimeMillis() - offTimeMillis
-                MyTimer.addPassedSeconds(TimeUnit.MILLISECONDS.toSeconds(timePassed))
-                preferences.edit().putLong(SCREEN_OFF_TIME, -1L).apply()
-            }
-            MyTimer.startTimer(dbHelper.getTodayTimeMillis())
-        }
-    }
-
-    private fun setUpWorkingTime() {
-        Log.v(LOG_TAG, "setUpWorkingTimeCalled")
-        val dbWorkingTime = dbHelper.getTodayWorkingTime()
-        Log.v(LOG_TAG, "setUpWorkingTime timer seconds: ${MyTimer.currentTimeSeconds}")
-        Log.v(LOG_TAG, "setUpWorkingTime db seconds: $dbWorkingTime")
-        if (dbWorkingTime >= MyTimer.currentTimeSeconds) {
-            Log.v(LOG_TAG, "setupWorkingTime -> setCurrentTimeAndUpdate($dbWorkingTime)")
-            MyTimer.setCurrentTimeAndUpdate(dbWorkingTime, dbHelper.getTodayTimeMillis())
-        }
-    }
-
     private fun setUpTimerNotificationCallback() {
-        MyTimer.callbackNotification = { it ->
+        MyTimer.updateNotificationUI = { it ->
             val time = TimeFormatter.getTimeFromSeconds(it)
             updateNotification(time)
         }
@@ -162,7 +115,6 @@ class WorkTimeService : Service() {
         if (measureDate != -1L) {
             dbHelper.updateWorkingTime(timeInSeconds, measureDate)
         }
-        preferences.edit().putBoolean(TIMER_IS_WORKING, MyTimer.isRunning).apply()
     }
 
     private fun updateNotification(contentText: String) {
@@ -192,7 +144,6 @@ class WorkTimeService : Service() {
                 onTimerStoppedActions()
             }
             else -> {
-                refreshTimerState()
                 onScreenStateUnknown()
             }
         }
@@ -206,25 +157,12 @@ class WorkTimeService : Service() {
 
     private fun onScreenOff() {
         Log.v(LOG_TAG, "Registered screen off!!")
-        if (MyTimer.isRunning) {
-            MyTimer.stopTimer()
-            preferences.edit()
-                    .putBoolean(TIMER_IS_WORKING, true)
-                    .putLong(SCREEN_OFF_TIME, dbHelper.getCurrentTimeMillis())
-                    .apply()
-        }
+        MyTimer.stopUpdates()
     }
 
     private fun onScreenOn() {
         Log.v(LOG_TAG, "Registered screen on!!")
-        val wasRunning = preferences.getBoolean(TIMER_IS_WORKING, false)
-        Log.v(LOG_TAG, "wasRunning $wasRunning")
-        if (wasRunning) {
-            val offTimeMillis = preferences.getLong(SCREEN_OFF_TIME, dbHelper.getCurrentTimeMillis())
-            val timePassed = dbHelper.getCurrentTimeMillis() - offTimeMillis
-            MyTimer.resumeTimer(TimeUnit.MILLISECONDS.toSeconds(timePassed))
-            preferences.edit().putLong(SCREEN_OFF_TIME, -1L).apply()
-        }
+        MyTimer.startUpdates()
     }
 
     private fun setUpScreenStateReceiver() {
@@ -237,37 +175,20 @@ class WorkTimeService : Service() {
 
     private fun setUpTimerCallbacks() {
         setUpTimerSaveCallback()
-        setUpTimerRunningStateCallbacks()
     }
 
     private fun setUpTimerSaveCallback() {
         MyTimer.saveTimerState = { time, date -> saveTimerState(time, date) }
     }
 
-    private fun setUpTimerRunningStateCallbacks() {
-        MyTimer.saveIsRunning = { isWorking -> saveIsRunningToSharedPrefs(isWorking) }
-        MyTimer.getIsRunning = { getIsRunningFromSharedPrefs() }
-    }
-
-    private fun getIsRunningFromSharedPrefs(): Boolean {
-        return preferences.getBoolean(TIMER_IS_WORKING, false)
-    }
-
-    private fun saveIsRunningToSharedPrefs(isWorking: Boolean) {
-        preferences.edit()
-                .putBoolean(TIMER_IS_WORKING, isWorking)
-                .apply()
-        Log.v(LOG_TAG, "Saving isWorking value: $isWorking")
-    }
-
     private fun onTimerStartedActions() {
-        refreshTimerState()
-        MyTimer.startTimer(dbHelper.getTodayTimeMillis())
+        MyTimer.startTimer(dbHelper.getDayTimeInMillis())
     }
 
     private fun onTimerStoppedActions() {
         MyTimer.stopTimer()
         startMainActivity()
+        stopForeground(true)
         stopSelf()
     }
 }

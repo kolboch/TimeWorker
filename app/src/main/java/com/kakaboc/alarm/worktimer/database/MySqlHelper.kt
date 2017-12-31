@@ -62,7 +62,7 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
     }
 
     fun getTodayWorkingTime(): Long {
-        val todayDaysMillis = getTodayTimeMillis()
+        val todayDaysMillis = getDayTimeInMillis()
         var result = getTodayWorkTime(todayDaysMillis)
         Log.v(LOG_TAG, "todayDaysMillis: $todayDaysMillis, workTime: $result")
         if (result == null) {
@@ -95,7 +95,7 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
         }
     }
 
-    fun getTodayTimeMillis(): Long {
+    fun getDayTimeInMillis(): Long {
         val calendar = Calendar.getInstance(userLocale)
         calendar.set(Calendar.HOUR_OF_DAY, 11)
         calendar.set(Calendar.MINUTE, 0)

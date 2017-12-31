@@ -11,35 +11,25 @@ import java.util.concurrent.TimeUnit
  */
 object MyTimer {
 
-    var isRunning = false
-        private set(value) {
-            field = value
-            saveIsRunning?.invoke(value)
-        }
-        get() {
-            return getIsRunning?.invoke() ?: false
-        }
-    //TODO try moving that logic also to shared preferences
-    var currentTimeSeconds = 0L
-        private set
-    var measureDate: Long = -1L
-
-    var callbackUI: ((Long) -> Unit)? = null
+    var updateActivityUI: ((Long) -> Unit)? = null
         set(callback) {
             field = callback
             update()
         }
-    var callbackNotification: ((Long) -> Unit)? = null
+    var updateNotificationUI: ((Long) -> Unit)? = null
         set(callback) {
             field = callback
             update()
         }
-
     var animateCallbackUI: ((Boolean) -> Unit)? = null
     var saveTimerState: ((Long, Long) -> Unit)? = null
-    var saveIsRunning: ((Boolean) -> Unit)? = null
-    var getIsRunning: (() -> Boolean)? = null
 
+    var measureDate: Long = -1L
+        private set
+    var currentTimeSeconds = 0L
+        private set
+
+    private var isRunning = false
     private var observableInterval = Observable.interval(1, TimeUnit.SECONDS)
     private var subscriber: Disposable? = null
     private var subscribersMonitor = 0
@@ -59,23 +49,7 @@ object MyTimer {
         if (isRunning && subscriber?.isDisposed == false) {
             return
         }
-        subscriber = observableInterval.subscribe {
-            currentTimeSeconds += 1
-            update()
-        }
-        animateCallbackUI?.invoke(isRunning)
-        isRunning = true
-    }
-
-    fun resumeTimer(timePassedSeconds: Long) {
-        if (isRunning && subscriber?.isDisposed == false) {
-            return
-        }
-        currentTimeSeconds += timePassedSeconds
-        subscriber = observableInterval.subscribe {
-            currentTimeSeconds += 1
-            update()
-        }
+        startUpdates()
         animateCallbackUI?.invoke(isRunning)
         isRunning = true
     }
@@ -84,10 +58,10 @@ object MyTimer {
         if (!isRunning) {
             return
         }
+        stopUpdates()
         animateCallbackUI?.invoke(isRunning)
         isRunning = false
         saveTimerState?.invoke(currentTimeSeconds, measureDate)
-        subscriber?.dispose()
     }
 
     fun changeRunningState(measureDate: Long) {
@@ -108,13 +82,21 @@ object MyTimer {
         update()
     }
 
-    fun addPassedSeconds(seconds: Long) {
-        currentTimeSeconds += seconds
+    fun startUpdates() {
+        //TODO check if we can subscribe !!!
+        subscriber = observableInterval.subscribe {
+            //TODO compute difference
+            update()
+        }
+    }
+
+    fun stopUpdates() {
+        subscriber?.dispose()
     }
 
     private fun update() {
         Log.v("Timer", "update called, seconds state $currentTimeSeconds")
-        callbackNotification?.invoke(currentTimeSeconds)
-        callbackUI?.invoke(currentTimeSeconds)
+        updateNotificationUI?.invoke(currentTimeSeconds)
+        updateActivityUI?.invoke(currentTimeSeconds)
     }
 }
