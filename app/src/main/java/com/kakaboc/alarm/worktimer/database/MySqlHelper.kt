@@ -63,13 +63,12 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
 
     fun getTodayWorkingTime(): Long {
         val todayDaysMillis = getDayTimeInMillis()
-        var result = getTodayWorkTime(todayDaysMillis)
+        var result = getWorkTime(todayDaysMillis)
         Log.v(LOG_TAG, "todayDaysMillis: $todayDaysMillis, workTime: $result")
         if (result == null) {
             setupTodayWorkingTime(todayDaysMillis)
             result = WorkTime(todayDaysMillis, 0)
         }
-
         return result.timeWorked
     }
 
@@ -79,10 +78,10 @@ class MySqlHelper private constructor(private val context: Context) : ManagedSQL
         }
     }
 
-    private fun getTodayWorkTime(todayMillis: Long): WorkTime? {
+    private fun getWorkTime(dayMillis: Long): WorkTime? {
         return context.database.use {
             select(TIMES_TABLE_NAME)
-                    .whereSimple("$TIMES_TABLE_DATE = ?", "$todayMillis")
+                    .whereSimple("$TIMES_TABLE_DATE = ?", "$dayMillis")
                     .exec { parseOpt(classParser()) }
         }
     }

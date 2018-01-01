@@ -18,13 +18,15 @@ import com.example.kb.worktimer.services.MyNotification
 import com.kakaboc.alarm.worktimer.database.MySqlHelper
 import com.kakaboc.alarm.worktimer.main.MainActivity
 import com.kakaboc.alarm.worktimer.model.MyTimer
+import com.kakaboc.alarm.worktimer.model.MyTimer.computeStartingTime
 import com.kakaboc.alarm.worktimer.model.TimeFormatter
+import java.util.*
 
 
 /**
  * Created by Karlo on 2017-10-06.
  */
-const val TIMER_IS_WORKING = "com.kakaboc.alarm.worktimer.is_working_preferences"
+const val TIMER_START_TIME = "com.kakaboc.alarm.worktimer.start_time"
 const val ACTION_START = "com.kakaboc.alarm.worktimer.action_start"
 const val PENDING_INTENT_START = 111
 const val ACTION_STOP = "com.kakaboc.alarm.worktimer.action_stop"
@@ -68,7 +70,9 @@ class WorkTimeService : Service() {
     }
 
     private fun onScreenStateUnknown() {
-        if (!isScreenOn()) {
+        if (isScreenOn()) {
+            onScreenOn()
+        } else {
             onScreenOff()
         }
     }
@@ -111,7 +115,7 @@ class WorkTimeService : Service() {
     }
 
     private fun saveTimerState(timeInSeconds: Long, measureDate: Long) {
-        Log.v(LOG_TAG, "saveTimerState called")
+        Log.v(LOG_TAG, "saveTimerState called, time: $timeInSeconds, $measureDate")
         if (measureDate != -1L) {
             dbHelper.updateWorkingTime(timeInSeconds, measureDate)
         }
@@ -156,13 +160,17 @@ class WorkTimeService : Service() {
     }
 
     private fun onScreenOff() {
-        Log.v(LOG_TAG, "Registered screen off!!")
+        Log.v(LOG_TAG, "onScreenOff")
         MyTimer.stopUpdates()
     }
 
     private fun onScreenOn() {
-        Log.v(LOG_TAG, "Registered screen on!!")
-        MyTimer.startUpdates()
+        Log.v(LOG_TAG, "onScreenOn")
+        val startTime = preferences.getLong(TIMER_START_TIME, -1L)
+        if (startTime != -1L) {
+            MyTimer.setUpTimer(startTime, dbHelper.getDayTimeInMillis())
+            MyTimer.startUpdates()
+        }
     }
 
     private fun setUpScreenStateReceiver() {
@@ -174,15 +182,28 @@ class WorkTimeService : Service() {
     }
 
     private fun setUpTimerCallbacks() {
-        setUpTimerSaveCallback()
+        MyTimer.saveTimerState = { time, date -> saveTimerState(time, date) }
+        MyTimer.clearStartTime = { clearSavedStartTime() }
+        MyTimer.setStartTime = { time -> saveStartTime(time) }
+        MyTimer.getCurrentTimeMillis = { dbHelper.getCurrentTimeMillis() }
     }
 
-    private fun setUpTimerSaveCallback() {
-        MyTimer.saveTimerState = { time, date -> saveTimerState(time, date) }
+    private fun saveStartTime(time: Long) {
+        Log.v(LOG_TAG, "saveing start time to shared prefs $time")
+        preferences.edit()
+                .putLong(TIMER_START_TIME, time)
+                .apply()
+    }
+
+    private fun clearSavedStartTime() {
+        Log.v(LOG_TAG, "clearing start time in shared prefs")
+        preferences.edit()
+                .putLong(TIMER_START_TIME, -1L)
+                .apply()
     }
 
     private fun onTimerStartedActions() {
-        MyTimer.startTimer(dbHelper.getDayTimeInMillis())
+        MyTimer.startTimer(computeStartingTime(dbHelper.getCurrentTimeMillis(), dbHelper.getTodayWorkingTime()), dbHelper.getDayTimeInMillis())
     }
 
     private fun onTimerStoppedActions() {

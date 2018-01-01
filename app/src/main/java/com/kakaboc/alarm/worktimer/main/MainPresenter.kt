@@ -6,9 +6,10 @@ import android.preference.PreferenceManager
 import android.util.Log
 import com.kakaboc.alarm.worktimer.R
 import com.kakaboc.alarm.worktimer.database.MySqlHelper
-import com.kakaboc.alarm.worktimer.model.TimeFormatter
 import com.kakaboc.alarm.worktimer.model.MyTimer
-import com.kakaboc.alarm.worktimer.services.TIMER_IS_WORKING
+import com.kakaboc.alarm.worktimer.model.MyTimer.computeStartingTime
+import com.kakaboc.alarm.worktimer.model.TimeFormatter
+import com.kakaboc.alarm.worktimer.services.TIMER_START_TIME
 import com.kakaboc.alarm.worktimer.services.WorkTimeService
 
 /**
@@ -32,25 +33,25 @@ class MainPresenter(private val view: MainView, private val context: Context) {
         refreshTimerState()
     }
 
-    private fun animateView(wasRunning: Boolean) {
-        if (wasRunning) {
-            view.onTimerStopped()
-        } else {
+    private fun animateView(isRunning: Boolean) {
+        if (isRunning) {
             view.onTimerStarted()
+        } else {
+            view.onTimerStopped()
         }
     }
 
     fun startStopTimer() {
-        MyTimer.changeRunningState(dbHelper.getDayTimeInMillis())
+        MyTimer.changeRunningState(computeStartingTime(dbHelper.getCurrentTimeMillis(), dbHelper.getTodayWorkingTime()), dbHelper.getDayTimeInMillis())
     }
 
     private fun refreshTimerState() {
-        view.onTimerUpdate(TimeFormatter.getTimeFromSeconds(dbHelper.getTodayWorkingTime()))
-        val wasWorking = preferences.getBoolean(TIMER_IS_WORKING, false)
-        if (wasWorking) {
+        val isWorking = preferences.getLong(TIMER_START_TIME, -1L) != -1L
+        if (isWorking) {
             view.onTimerButtonUpdate(R.string.stop)
         } else {
             view.onTimerButtonUpdate(R.string.start)
+            view.onTimerUpdate(TimeFormatter.getTimeFromSeconds(dbHelper.getTodayWorkingTime()))
         }
     }
 
