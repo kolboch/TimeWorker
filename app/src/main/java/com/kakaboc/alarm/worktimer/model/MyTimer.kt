@@ -12,15 +12,7 @@ import java.util.concurrent.TimeUnit
 object MyTimer {
 
     var updateActivityUI: ((Long) -> Unit)? = null
-        set(callback) {
-            field = callback
-            update()
-        }
     var updateNotificationUI: ((Long) -> Unit)? = null
-        set(callback) {
-            field = callback
-            update()
-        }
     var animateCallbackUI: ((Boolean) -> Unit)? = null
     var saveTimerState: ((Long, Long) -> Unit)? = null
     var clearStartTime: (() -> Unit)? = null
@@ -57,6 +49,7 @@ object MyTimer {
             return
         }
         stopUpdates()
+        currentTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(getCurrentTimeMillis!!.invoke() - startTime)
         saveTimerState?.invoke(currentTimeSeconds, measureDate)
         clearStartTime?.invoke()
         startTime = -1L

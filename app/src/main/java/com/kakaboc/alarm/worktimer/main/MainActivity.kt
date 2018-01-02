@@ -82,4 +82,9 @@ class MainActivity : AppCompatActivity(), MainView {
         animation.duration = 700
         animation.start()
     }
+
+    override fun onDestroy() {
+        presenter.onActivityDestroyed()
+        super.onDestroy()
+    }
 }
