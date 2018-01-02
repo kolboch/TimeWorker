@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.kakaboc.alarm.worktimer">
+    package="com.kakaboc.alarm.worktimer">
 
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher_round"
@@ -14,24 +13,24 @@
             android:name="com.kakaboc.alarm.worktimer.main.MainActivity"
             android:launchMode="singleTask">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <service android:name="com.kakaboc.alarm.worktimer.services.WorkTimeService">
             <intent-filter>
-                <action android:name="com.kakaboc.alarm.worktimer.action_start"/>
-                <action android:name="com.kakaboc.alarm.worktimer.action_stop"/>
-                <action android:name="com.kakaboc.alarm.worktimer.action_save"/>
+                <action android:name="com.kakaboc.alarm.worktimer.action_start" />
+                <action android:name="com.kakaboc.alarm.worktimer.action_stop" />
+                <action android:name="com.kakaboc.alarm.worktimer.action_save" />
             </intent-filter>
         </service>
 
         <activity android:name="com.kakaboc.alarm.worktimer.statistic.StatisticsActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.kakaboc.alarm.worktimer.main.MainActivity"/>
+                android:value="com.kakaboc.alarm.worktimer.main.MainActivity" />
         </activity>
     </application>
 
