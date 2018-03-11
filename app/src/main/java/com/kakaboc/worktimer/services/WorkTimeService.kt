@@ -188,7 +188,7 @@ class WorkTimeService : Service() {
     }
 
     private fun saveStartTime(time: Long) {
-        Log.v(LOG_TAG, "saveing start time to shared prefs $time")
+        Log.v(LOG_TAG, "saving start time to shared prefs $time")
         preferences.edit()
                 .putLong(TIMER_START_TIME, time)
                 .apply()
@@ -202,7 +202,10 @@ class WorkTimeService : Service() {
     }
 
     private fun onTimerStartedActions() {
-        MyTimer.startTimer(computeStartingTime(dbHelper.getCurrentTimeMillis(), dbHelper.getTodayWorkingTime()), dbHelper.getDayTimeInMillis())
+        MyTimer.startTimer(
+                computeStartingTime(dbHelper.getCurrentTimeMillis(), dbHelper.getTodayWorkingTime()),
+                dbHelper.getDayTimeInMillis()
+        )
     }
 
     private fun onTimerStoppedActions() {

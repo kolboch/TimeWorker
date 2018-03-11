@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/AppTimer.iml" filepath="$PROJECT_DIR$/AppTimer.iml" />
       <module fileurl="file://$PROJECT_DIR$/TimeWorker.iml" filepath="$PROJECT_DIR$/TimeWorker.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>

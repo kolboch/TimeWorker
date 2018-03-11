@@ -35,7 +35,7 @@ object MyTimer {
 
     fun startTimer(startingTime: Long, measureDate: Long) {
         Log.v(LOG_TAG, "Starting timer, isRunning: $isRunning")
-        onNewMeasureDate(measureDate)
+        onNewMeasureDate(startingTime, measureDate)
         if (isRunning && subscriber?.isDisposed == false) {
             return
         }
@@ -85,7 +85,7 @@ object MyTimer {
 
     fun setUpTimer(startTime: Long, measureDate: Long) {
         this.startTime = startTime
-        onNewMeasureDate(measureDate)
+        onNewMeasureDate(startTime, measureDate)
     }
 
     fun computeStartingTime(currentTimeMillis: Long, workingTimeSeconds: Long): Long {
@@ -110,13 +110,13 @@ object MyTimer {
         setStartTime?.invoke(startTime)
     }
 
-    private fun onNewMeasureDate(measureDate: Long) {
+    private fun onNewMeasureDate(startingTime: Long, measureDate: Long) {
         if (this.measureDate == -1L) {
             this.measureDate = measureDate
         } else if (this.measureDate != measureDate) {
             saveTimerState?.invoke(currentTimeSeconds, this.measureDate)
             this.measureDate = measureDate
-            setCurrentTimeAndUpdate(0)
+            setCurrentTimeAndUpdate(startingTime)
         }
     }
 
