@@ -5,4 +5,5 @@
     <string name="working_data_label">рабочее время</string>
     <string name="menu_stats_title">статистика</string>
     <string name="current_working_time">текущее рабочее время</string>
+    <string name="channel_description">Упрощает использование приложений</string>
 </resources>

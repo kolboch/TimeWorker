@@ -5,4 +5,5 @@
     <string name="working_data_label">Arbeitszeit</string>
     <string name="current_working_time">Aktuell arbeitszeit</string>
     <string name="start">Start</string>
+    <string name="channel_description">Vereinfacht die App-Nutzung</string>
 </resources>

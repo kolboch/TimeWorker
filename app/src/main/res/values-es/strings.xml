@@ -5,4 +5,5 @@
     <string name="menu_stats_title">Estadística</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>
+    <string name="channel_description">Simplifica el uso de la aplicación</string>
 </resources>
